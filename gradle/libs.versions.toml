@@ -1,5 +1,8 @@
 [versions]
+spock = "2.4-groovy-4.0"
 spotless = "8.3.0"
 
 [libraries]
+spock-bom = { module = "org.spockframework:spock-bom", version.ref = "spock" }
+spock-core = { module = "org.spockframework:spock-core" }
 spotless-plugin = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
