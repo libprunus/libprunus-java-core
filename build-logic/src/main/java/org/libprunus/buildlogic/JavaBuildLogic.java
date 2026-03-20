@@ -1,22 +1,33 @@
 package org.libprunus.buildlogic;
 
-import com.diffplug.gradle.spotless.SpotlessExtension;
-import com.diffplug.gradle.spotless.SpotlessPlugin;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+
 import org.gradle.api.Project;
 import org.gradle.api.plugins.GroovyPlugin;
 import org.gradle.api.plugins.JavaLibraryPlugin;
+import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.api.tasks.javadoc.Javadoc;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat;
 import org.gradle.api.tasks.testing.logging.TestLogEvent;
+import org.gradle.external.javadoc.StandardJavadocDocletOptions;
+import org.gradle.jvm.toolchain.JavaLanguageVersion;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.testing.jacoco.tasks.rules.JacocoViolationRule;
 
+import com.diffplug.gradle.spotless.SpotlessExtension;
+import com.diffplug.gradle.spotless.SpotlessPlugin;
+
 final class JavaBuildLogic {
+
+    private static final int JAVA_VERSION = 25;
+    private static final String UTF_8 = StandardCharsets.UTF_8.name();
     private static final double COVERAGE_THRESHOLD = 0.9;
 
     private final Project project;
@@ -27,6 +38,7 @@ final class JavaBuildLogic {
 
     void apply() {
         applyNecessaryPlugins();
+        configureJava();
         configureJacoco();
         configureTest();
         configureSpotless();
@@ -41,6 +53,30 @@ final class JavaBuildLogic {
         pluginManager.apply(JacocoPlugin.class);
         pluginManager.apply(JavaLibraryPlugin.class);
         pluginManager.apply(SpotlessPlugin.class);
+    }
+
+    private void configureJava() {
+        JavaPluginExtension javaExtension = project.getExtensions().getByType(JavaPluginExtension.class);
+        javaExtension.getToolchain().getLanguageVersion().set(JavaLanguageVersion.of(JAVA_VERSION));
+
+        javaExtension.withSourcesJar();
+        javaExtension.withJavadocJar();
+
+        project.getTasks().withType(JavaCompile.class).configureEach(task -> {
+            var options = task.getOptions();
+            options.setEncoding(UTF_8);
+            options.getCompilerArgs().add("-parameters");
+            options.getCompilerArgs().addAll(List.of("-Xlint:unchecked", "-Xlint:deprecation"));
+            options.getRelease().set(JAVA_VERSION);
+            options.setIncremental(true);
+        });
+
+        project.getTasks().withType(Javadoc.class).configureEach(task -> {
+            var options = (StandardJavadocDocletOptions) task.getOptions();
+            options.setEncoding(UTF_8);
+            options.setCharSet(UTF_8);
+            options.setDocEncoding(UTF_8);
+        });
     }
 
     private void configureJacoco() {
@@ -103,6 +139,17 @@ final class JavaBuildLogic {
             javaExtension.importOrder();
             javaExtension.trimTrailingWhitespace();
             javaExtension.endWithNewline();
+        });
+
+        spotless.groovy(groovyExtension -> {
+            groovyExtension.target("src/**/*.groovy");
+            groovyExtension.targetExclude("**/build/generated/**/*.groovy");
+
+            groovyExtension.importOrder();
+            groovyExtension.removeSemicolons();
+            groovyExtension.trimTrailingWhitespace();
+            groovyExtension.leadingTabsToSpaces(4);
+            groovyExtension.endWithNewline();
         });
 
         spotless.kotlinGradle(kotlinGradleExtension -> {

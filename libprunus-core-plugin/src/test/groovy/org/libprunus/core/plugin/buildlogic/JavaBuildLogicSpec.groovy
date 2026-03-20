@@ -1,23 +1,25 @@
 package org.libprunus.core.plugin.buildlogic
 
+import com.diffplug.gradle.spotless.SpotlessExtension
 import com.diffplug.gradle.spotless.SpotlessPlugin
+import java.math.BigDecimal
+import java.nio.file.Files
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaLibraryPlugin
-import org.gradle.testfixtures.ProjectBuilder
+import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.testing.junitplatform.JUnitPlatformOptions
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.gradle.external.javadoc.StandardJavadocDocletOptions
+import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testing.jacoco.plugins.JacocoPlugin
 import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
 import org.gradle.testing.jacoco.tasks.JacocoReport
 import org.gradle.testing.jacoco.tasks.rules.JacocoViolationRule
 import spock.lang.Specification
 import spock.lang.Subject
-
-import java.math.BigDecimal
-import com.diffplug.gradle.spotless.SpotlessExtension
-import java.nio.file.Files
 
 class JavaBuildLogicSpec extends Specification {
 
@@ -236,6 +238,60 @@ class JavaBuildLogicSpec extends Specification {
         project.tasks.findByName("spotlessJava") != null
         project.tasks.findByName("spotlessKotlinGradle") != null
     }
+
+        def "configureJava sets encoding compiler args release and incremental on compile tasks when realized"() {
+            given: "a project with necessary plugins applied"
+            project = createProject("configure-java-compile")
+            subject = new JavaBuildLogic(project)
+            subject.applyNecessaryPlugins()
+
+            when: "java configuration is applied"
+            subject.configureJava()
+
+            then: "all java compile tasks have encoding compiler args release and incremental configured"
+            project.tasks.withType(JavaCompile).every { task ->
+                task.options.encoding == "UTF-8" &&
+                        task.options.compilerArgs.containsAll(["-parameters", "-Xlint:unchecked", "-Xlint:deprecation"]) &&
+                        task.options.release.get() == 25 &&
+                        task.options.incremental
+            }
+        }
+
+        def "configureJava sets encoding charset and doc encoding on javadoc tasks when realized"() {
+            given: "a project with necessary plugins applied"
+            project = createProject("configure-java-javadoc")
+            subject = new JavaBuildLogic(project)
+            subject.applyNecessaryPlugins()
+
+            when: "java configuration is applied"
+            subject.configureJava()
+
+            then: "all javadoc tasks have encoding charset and doc encoding configured"
+            project.tasks.withType(Javadoc).every { task ->
+                def opts = task.options as StandardJavadocDocletOptions
+                opts.encoding == "UTF-8" &&
+                        opts.charSet == "UTF-8" &&
+                        opts.docEncoding == "UTF-8"
+            }
+        }
+
+        def "configureSpotless applies groovy format actions to the registered groovy format"() {
+            given: "a registered spotless groovy format"
+            project = createProject("configure-spotless-groovy-format")
+            subject = new JavaBuildLogic(project)
+            subject.applyNecessaryPlugins()
+            subject.configureSpotless()
+            def spotless = project.extensions.getByType(SpotlessExtension)
+            def groovyFormat = spotless.@formats["groovy"]
+
+            when: "all groovy format lazy actions are executed"
+            groovyFormat.@lazyActions.each { it.execute(groovyFormat) }
+
+            then: "groovy format target exclude and formatter steps are configured"
+            groovyFormat.@target != null
+            groovyFormat.@targetExclude != null
+            groovyFormat.@steps.size() >= 5
+        }
 
     private static JacocoViolationRule createRule(JacocoCoverageVerification verification, boolean seedExistingRule) {
         verification.violationRules.rule { rule ->
