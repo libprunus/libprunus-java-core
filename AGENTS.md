@@ -1,0 +1,13 @@
+# Requirements
+- **No comments needed** — code must be self-explanatory.
+- **Modularize functionality** — each module handles one responsibility. Single files should not exceed 300 lines in principle, and must never exceed 500 lines.
+- **Follow best practices** at all times.
+- **All code must include unit tests and integration tests**, the details of tests are specified in the `.github/skills/test.md` file. Strictly adhere to the testing guidelines provided there.
+- **Do not add any unnecessary functionality**.
+- **Use `./gradlew clean spotlessApply build`** for testing and building. Every final answer must have a successful build run. Only this command is allowed for building/testing.
+- Before acting, create a highly detailed, step-by-step implementation plan to avoid on-the-fly decisions, and self-review it against requirements.
+  - Ensure CURRENT_TASK.md is empty, then write your plan into it.
+  - The plan needs to be same language as the prompt.
+  - After writing the plan, ask me to review it before you start implementing. Do not start implementation until the plan is approved.
+  - Update the file dynamically as you complete each step.
+  - Once fully finished, append "Task completed" to the file.
