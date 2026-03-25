@@ -1,0 +1,8 @@
+[versions]
+libprunus = "0.0.1-SNAPSHOT"
+
+[libraries]
+libprunus-bom = { module = "org.libprunus:libprunus-bom", version.ref = "libprunus" }
+
+[plugins]
+libprunus-spring-core = { id = "org.libprunus.libprunus-spring-core-plugin", version.ref = "libprunus" }
