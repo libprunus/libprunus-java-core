@@ -1,4 +1,4 @@
-package org.libprunus.spring.core.plugin;
+package org.libprunus.spring.server.plugin;
 
 import io.spring.gradle.dependencymanagement.DependencyManagementPlugin;
 import org.gradle.api.Plugin;

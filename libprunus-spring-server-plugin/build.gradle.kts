@@ -15,7 +15,7 @@ gradlePlugin {
     plugins {
         create("libprunusSpringCorePlugin") {
             id = "org.libprunus.libprunus-spring-core-plugin"
-            implementationClass = "org.libprunus.spring.core.plugin.LibprunusSpringCorePlugin"
+            implementationClass = "org.libprunus.spring.server.plugin.LibprunusSpringCorePlugin"
         }
     }
 }

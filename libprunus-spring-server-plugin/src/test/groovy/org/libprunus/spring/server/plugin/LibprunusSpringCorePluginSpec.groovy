@@ -1,4 +1,4 @@
-package org.libprunus.spring.core.plugin
+package org.libprunus.spring.server.plugin
 
 import io.spring.gradle.dependencymanagement.DependencyManagementPlugin
 import org.gradle.api.plugins.JavaLibraryPlugin
@@ -10,22 +10,22 @@ import spock.lang.Specification
 class LibprunusSpringCorePluginSpec extends Specification {
 
     def "apply registers spring boot dependency management and core plugin contracts"() {
-        given: "a fresh project and plugin instance"
+        given: "a fresh project and the plugin under test"
         def project = ProjectBuilder.builder().withName("libprunus-spring-core-plugin-spec").build()
         def plugin = new LibprunusSpringCorePlugin()
 
-        when: "the plugin is applied"
+        when: "the plugin is applied to the project"
         plugin.apply(project)
 
-        then: "spring boot and dependency management plugins are present"
+        then: "spring boot and dependency management plugins are applied"
         project.plugins.hasPlugin(SpringBootPlugin)
         project.plugins.hasPlugin(DependencyManagementPlugin)
 
-        and: "core plugin contracts are transitively applied"
+        and: "core plugin contracts are transitively available"
         project.plugins.hasPlugin(JacocoPlugin)
         project.plugins.hasPlugin(JavaLibraryPlugin)
 
-        and: "the runtime starter stack is provided through libprunus-spring-server"
+        and: "the implementation dependency includes libprunus-spring-server"
         def implementationDependencies = project.configurations.getByName("implementation").dependencies
         implementationDependencies.find {
             it.group == "org.libprunus" && it.name == "libprunus-spring-server"
