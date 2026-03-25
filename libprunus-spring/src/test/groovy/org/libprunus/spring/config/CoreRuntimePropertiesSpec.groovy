@@ -6,6 +6,9 @@ import spock.lang.Specification
 class CoreRuntimePropertiesSpec extends Specification {
 
     def "can instantiate core runtime properties"() {
+        given: "the core runtime properties type"
+        def type = CoreRuntimeProperties
+
         when: "a new properties object is created"
         def properties = new CoreRuntimeProperties()
 
@@ -14,8 +17,11 @@ class CoreRuntimePropertiesSpec extends Specification {
     }
 
     def "declares libprunus configuration prefix"() {
+        given: "the core runtime properties type"
+        def type = CoreRuntimeProperties
+
         when: "configuration properties metadata is read"
-        def annotation = CoreRuntimeProperties.getAnnotation(ConfigurationProperties)
+        def annotation = type.getAnnotation(ConfigurationProperties)
 
         then: "the expected prefix is declared"
         annotation != null

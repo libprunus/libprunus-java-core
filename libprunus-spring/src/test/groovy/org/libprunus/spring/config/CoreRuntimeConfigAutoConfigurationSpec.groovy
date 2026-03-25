@@ -31,4 +31,18 @@ class CoreRuntimeConfigAutoConfigurationSpec extends Specification {
         then: "the repository snapshot matches the provided runtime config"
         repository.getGlobalSnapshot().is(runtimeConfig)
     }
+
+    def "runtime config creation supports normal and null properties inputs"() {
+        given: "an auto-configuration instance"
+        def autoConfiguration = new CoreRuntimeConfigAutoConfiguration()
+
+        when: "runtime config is requested with varied properties inputs"
+        def runtimeConfig = autoConfiguration.coreRuntimeConfig(propertiesInput)
+
+        then: "a runtime config instance is always created"
+        runtimeConfig instanceof CoreRuntimeConfig
+
+        where:
+        propertiesInput << [new CoreRuntimeProperties(), null]
+    }
 }

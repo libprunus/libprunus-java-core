@@ -15,4 +15,20 @@ class ManagementControllerSpec extends Specification {
         result.statusCode.is2xxSuccessful()
         result.body == "health"
     }
+
+    def "health remains deterministic across repeated invocations"() {
+        given: "a management controller instance"
+        def controller = new ManagementController()
+
+        when: "the health endpoint is invoked multiple times"
+        def responses = (1..invocationCount).collect { controller.health() }
+
+        then: "all responses are successful and have the same payload"
+        responses.size() == invocationCount
+        responses.every { it.statusCode.is2xxSuccessful() }
+        responses.every { it.body == "health" }
+
+        where:
+        invocationCount << [1, 2, 5]
+    }
 }

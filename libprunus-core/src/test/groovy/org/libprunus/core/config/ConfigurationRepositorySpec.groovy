@@ -58,4 +58,15 @@ class ConfigurationRepositorySpec extends Specification {
         where:
         refreshCount << [1, 2, 5]
     }
+
+    def "refresh accepts null and updates snapshot to null"() {
+        given: "an initialized repository"
+        @Subject ConfigurationRepository repo = new ConfigurationRepository(new CoreRuntimeConfig())
+
+        when: "the repository is refreshed with null"
+        repo.refresh(null)
+
+        then: "the snapshot becomes null"
+        repo.getGlobalSnapshot() == null
+    }
 }
