@@ -9,9 +9,18 @@ javaPlatform {
 
 dependencies {
     api(platform(libs.spock.bom))
+    api(platform(libs.spring.boot.bom))
 
     constraints {
+        api(project(":libprunus-core"))
+        api(project(":libprunus-spring"))
+        api(project(":libprunus-spring-server"))
         api(libs.spock.core)
+        api(libs.groovy.core) {
+            version {
+                strictly(libs.versions.groovy.get())
+            }
+        }
     }
 }
 
