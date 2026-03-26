@@ -4,6 +4,7 @@ import com.diffplug.gradle.spotless.SpotlessExtension
 import com.diffplug.gradle.spotless.SpotlessPlugin
 import java.math.BigDecimal
 import java.nio.file.Files
+import java.util.Optional
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.tasks.compile.JavaCompile
@@ -178,16 +179,62 @@ class JavaBuildLogicSpec extends Specification {
         kotlinGradleFormat.@steps.size() >= 2
     }
 
-    def "configureTest adds groovy junit and spock dependencies"() {
-        given: "a project configured by JavaBuildLogic"
-        project = createProject("configure-test-dependencies")
+    def "configureTest skips groovy and spock when no catalog is provided"() {
+        given: "a project configured by JavaBuildLogic without a version catalog"
+        project = createProject("configure-test-no-catalog")
         subject = new JavaBuildLogic(project)
         subject.applyNecessaryPlugins()
 
         when: "test dependency configuration is applied"
         subject.configureTest()
 
-        then: "groovy, junit, spock, and junit launcher dependencies are present"
+        then: "groovy and spock are absent, only junit platform dependencies are present"
+        def testImpl = dependencyCoordinates(project, "testImplementation")
+        !testImpl.contains("org.apache.groovy:groovy")
+        !testImpl.contains("org.spockframework:spock-core")
+        dependencyCoordinates(project, "testRuntimeOnly").contains("org.junit.platform:junit-platform-launcher")
+    }
+
+    def "configureTest skips groovy and spock when catalog does not define the aliases"() {
+        given: "a project with a catalog that does not expose the requested test aliases"
+        project = createProject("configure-test-catalog-alias-missing")
+        def libs = Stub(org.gradle.api.artifacts.VersionCatalog) {
+            findLibrary("groovy-core") >> Optional.empty()
+            findLibrary("spock-core") >> Optional.empty()
+        }
+        subject = new JavaBuildLogic(project, libs)
+        subject.applyNecessaryPlugins()
+
+        when: "test dependency configuration is applied"
+        subject.configureTest()
+
+        then: "groovy and spock are absent because there is no alias to resolve"
+        def testImpl = dependencyCoordinates(project, "testImplementation")
+        !testImpl.contains("org.apache.groovy:groovy")
+        !testImpl.contains("org.spockframework:spock-core")
+        dependencyCoordinates(project, "testRuntimeOnly").contains("org.junit.platform:junit-platform-launcher")
+    }
+
+    def "configureTest resolves dependencies from catalog when aliases are present"() {
+        given: "a project with catalog-provided test dependency aliases"
+        project = createProject("configure-test-catalog-present")
+        def groovyProvider = project.providers.provider { "org.apache.groovy:groovy" }
+        def spockProvider = project.providers.provider { "org.spockframework:spock-core" }
+        def junitProvider = project.providers.provider { "org.junit.jupiter:junit-jupiter" }
+        def launcherProvider = project.providers.provider { "org.junit.platform:junit-platform-launcher" }
+        def libs = Stub(org.gradle.api.artifacts.VersionCatalog) {
+            findLibrary("groovy-core") >> Optional.of(groovyProvider)
+            findLibrary("spock-core") >> Optional.of(spockProvider)
+            findLibrary("junit-jupiter") >> Optional.of(junitProvider)
+            findLibrary("junit-platform-launcher") >> Optional.of(launcherProvider)
+        }
+        subject = new JavaBuildLogic(project, libs)
+        subject.applyNecessaryPlugins()
+
+        when: "test dependency configuration is applied"
+        subject.configureTest()
+
+        then: "catalog-backed groovy and spock dependencies are added"
         dependencyCoordinates(project, "testImplementation").containsAll([
                 "org.apache.groovy:groovy",
                 "org.junit.jupiter:junit-jupiter",

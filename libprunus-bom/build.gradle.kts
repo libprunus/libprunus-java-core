@@ -8,7 +8,6 @@ javaPlatform {
 }
 
 dependencies {
-    api(platform(libs.spock.bom))
     api(platform(libs.spring.boot.bom))
 
     constraints {

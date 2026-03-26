@@ -1,9 +1,9 @@
 package org.libprunus.spring.server.management;
 
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
-@Configuration
+@AutoConfiguration
 public class ManagementConfiguration {
 
     @Bean

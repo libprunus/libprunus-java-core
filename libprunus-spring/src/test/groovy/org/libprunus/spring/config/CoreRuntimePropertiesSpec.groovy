@@ -6,9 +6,6 @@ import spock.lang.Specification
 class CoreRuntimePropertiesSpec extends Specification {
 
     def "can instantiate core runtime properties"() {
-        given: "the core runtime properties type"
-        def type = CoreRuntimeProperties
-
         when: "a new properties object is created"
         def properties = new CoreRuntimeProperties()
 

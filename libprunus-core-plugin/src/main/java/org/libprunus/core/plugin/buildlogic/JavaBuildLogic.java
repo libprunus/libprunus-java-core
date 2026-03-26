@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.VersionCatalog;
 import org.gradle.api.plugins.GroovyPlugin;
 import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
@@ -28,9 +29,15 @@ public final class JavaBuildLogic {
     private static final double COVERAGE_THRESHOLD = 0.9;
 
     private final Project project;
+    private final VersionCatalog libs;
 
     public JavaBuildLogic(Project project) {
+        this(project, null);
+    }
+
+    public JavaBuildLogic(Project project, VersionCatalog libs) {
         this.project = project;
+        this.libs = libs;
     }
 
     public void apply() {
@@ -105,9 +112,11 @@ public final class JavaBuildLogic {
     private void configureTest() {
         var dependencies = project.getDependencies();
 
-        dependencies.add("testImplementation", "org.apache.groovy:groovy");
+        if (libs != null) {
+            libs.findLibrary("groovy-core").ifPresent(dep -> dependencies.add("testImplementation", dep));
+            libs.findLibrary("spock-core").ifPresent(dep -> dependencies.add("testImplementation", dep));
+        }
         dependencies.add("testImplementation", "org.junit.jupiter:junit-jupiter");
-        dependencies.add("testImplementation", "org.spockframework:spock-core");
         dependencies.add("testRuntimeOnly", "org.junit.platform:junit-platform-launcher");
 
         project.getTasks().withType(Test.class).configureEach(test -> {
