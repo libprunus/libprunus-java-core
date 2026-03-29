@@ -6,7 +6,12 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":libprunus-core"))
+    implementation(libs.byte.buddy)
+    implementation(libs.byte.buddy.gradle.plugin)
     implementation(libs.spotless.plugin)
+
+    testImplementation(gradleTestKit())
 }
 
 gradlePlugin {
