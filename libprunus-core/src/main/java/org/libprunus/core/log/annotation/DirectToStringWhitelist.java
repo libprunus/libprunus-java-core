@@ -17,6 +17,11 @@ import java.lang.annotation.Target;
  * <p>Duplicate configured types are deduplicated during configuration processing while preserving
  * declaration order.
  *
+ * <p>Because matching is hierarchy-aware, configuring a shared supertype or interface is usually
+ * sufficient to cover many concrete subtypes. Listing a large number of individual concrete classes
+ * is rarely necessary; entries exceeding roughly 1000 may approach JVM method-body size limits in
+ * the generated binding class.
+ *
  * <p>For values outside the effective whitelist, rendering falls back to a safer structural path
  * (for example, class name plus identity), avoiding uncontrolled {@code toString()} execution.
  */
