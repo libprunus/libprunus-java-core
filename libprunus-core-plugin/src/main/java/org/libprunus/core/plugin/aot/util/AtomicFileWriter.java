@@ -27,7 +27,7 @@ public final class AtomicFileWriter {
             Files.write(tmp, content);
             try {
                 Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-            } catch (AtomicMoveNotSupportedException ignored) {
+            } catch (AtomicMoveNotSupportedException _) {
                 Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING);
             }
         } finally {

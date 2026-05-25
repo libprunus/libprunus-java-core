@@ -62,7 +62,7 @@ public abstract class GenerateLibraryWhitelistTask extends AbstractAotActionTask
         }
         try (ZipFile zip = new ZipFile(entry)) {
             return zip.getEntry(PrunusPluginConstants.WHITELIST_RESOURCE_PATH) != null;
-        } catch (IOException ignored) {
+        } catch (IOException _) {
             return false;
         }
     }

@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.LongAdder;
 final class LoggingFailureReporter {
 
     private static final int MAX_DETAILED_PER_SECOND = 10;
-    private final long START_NANOS = System.nanoTime();
+    private final long startNanos = System.nanoTime();
     private static final String SOE_OMITTED_SUFFIX = " [stack trace omitted due to StackOverflowError]";
     private static final String DROPPED_PREFIX = "libprunus: ";
     private static final String DROPPED_SUFFIX = " logging failure event(s) dropped (rate-limited)";
@@ -31,7 +31,7 @@ final class LoggingFailureReporter {
             throw virtualMachineError;
         }
 
-        long currentNanos = System.nanoTime() - START_NANOS;
+        long currentNanos = System.nanoTime() - startNanos;
         long currentSecond = TimeUnit.NANOSECONDS.toSeconds(currentNanos);
         if (!tryAcquire(currentSecond)) {
             droppedCount.increment();
@@ -84,13 +84,14 @@ final class LoggingFailureReporter {
             throwable.printStackTrace(err);
         } catch (VirtualMachineError e) {
             throw e;
-        } catch (Throwable ignored) {
+        } catch (Throwable _) {
             try {
                 PrintStream err = System.err;
                 err.print("libprunus logging failure and failed to report it: ");
                 err.print(ownerAndMethod);
                 err.print(System.lineSeparator());
-            } catch (Throwable ignoredAgain) {
+            } catch (Throwable _) {
+                // final fallback: if even System.err write threw, swallow to avoid logging-induced crash
             }
         }
     }
@@ -112,7 +113,8 @@ final class LoggingFailureReporter {
                     err.print(System.lineSeparator());
                 } catch (VirtualMachineError e) {
                     throw e;
-                } catch (Throwable ignored) {
+                } catch (Throwable _) {
+                    // dropped-count reporter: swallow secondary System.err failure (already inside best-effort path)
                 }
                 return;
             }

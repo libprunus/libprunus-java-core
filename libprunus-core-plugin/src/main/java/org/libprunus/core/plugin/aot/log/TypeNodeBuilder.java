@@ -39,7 +39,6 @@ final class TypeNodeBuilder {
                 : List.of();
 
         return new TypeNode(
-                binaryName,
                 packageName,
                 className,
                 isRegistryClass,
@@ -112,10 +111,8 @@ final class TypeNodeBuilder {
                     method, typeLevelFamily, isOverride, overrideLayers, graph);
             boolean anyLiteralFamily = MethodFamilyResolver.anyParameterCarriesLiteralFamily(method);
             nodes.add(new MethodNode(
-                    type.getName(),
                     method.getInternalName(),
                     method.getDescriptor(),
-                    method.getModifiers(),
                     hasMethodLevelIgnore,
                     shapeEligible,
                     methodLevelFamily,
@@ -239,7 +236,7 @@ final class TypeNodeBuilder {
                 }
                 generic = supertype.getSuperClass();
             }
-        } catch (TypePool.Resolution.NoSuchTypeException ignored) {
+        } catch (TypePool.Resolution.NoSuchTypeException _) {
         }
         return slots;
     }

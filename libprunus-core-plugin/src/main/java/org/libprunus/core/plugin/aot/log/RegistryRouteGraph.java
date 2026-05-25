@@ -77,20 +77,13 @@ final class RegistryRouteGraph {
     }
 
     MethodLoggingRule methodRuleFor(TypeDescription type) {
-        return nodeOf(type).methodRule().orElseThrow();
+        return nodeOf(type)
+                .methodRule()
+                .orElseThrow(() -> new IllegalStateException("Method rule missing for " + type.getName()));
     }
 
     List<FieldRenderSlot> toStringFieldChain(TypeDescription type) {
         return nodeOf(type).toStringFieldChain();
-    }
-
-    boolean shouldEmitEnterExit(MethodDescription method) {
-        TypeDescription declaringType = method.getDeclaringType().asErasure();
-        if (!methodEligible(declaringType)) {
-            return false;
-        }
-        MethodNode methodNode = findMethodNode(declaringType, method);
-        return shouldEmitEnterExitFor(methodNode);
     }
 
     boolean shouldEmitEnterExitFor(MethodNode methodNode) {

@@ -47,7 +47,7 @@ public final class FinalRegistryAggregator {
         } else {
             estimatedSize += 64;
         }
-        LinkedHashSet<String> merged = new LinkedHashSet<>((int) (estimatedSize / 0.75f) + 1);
+        LinkedHashSet<String> merged = LinkedHashSet.newLinkedHashSet(estimatedSize);
         merged.addAll(RuntimeBindingAbi.CORE_BUILTIN_WHITELIST);
         merged.addAll(hostWhitelist);
 

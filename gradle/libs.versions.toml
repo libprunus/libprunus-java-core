@@ -1,5 +1,6 @@
 [versions]
 byte-buddy = "1.18.7"
+cfr = "0.152"
 groovy = "4.0.29"
 logback = "1.5.32"
 slf4j = "2.0.17"
@@ -12,6 +13,7 @@ spring-dependency-management = "1.1.7"
 [libraries]
 byte-buddy = { module = "net.bytebuddy:byte-buddy", version.ref = "byte-buddy" }
 byte-buddy-gradle-plugin = { module = "net.bytebuddy:byte-buddy-gradle-plugin", version.ref = "byte-buddy" }
+cfr = { module = "org.benf:cfr", version.ref = "cfr" }
 groovy-core = { module = "org.apache.groovy:groovy", version.ref = "groovy" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }

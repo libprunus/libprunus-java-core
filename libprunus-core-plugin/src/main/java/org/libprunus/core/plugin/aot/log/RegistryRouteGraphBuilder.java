@@ -1,6 +1,7 @@
 package org.libprunus.core.plugin.aot.log;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -51,15 +52,16 @@ final class RegistryRouteGraphBuilder {
     }
 
     private static TypeDescription resolveType(String className, TypePool typePool) {
+        TypePool.Resolution resolution;
         try {
-            TypePool.Resolution resolution = typePool.describe(className);
-            if (!resolution.isResolved()) {
-                throw new IllegalStateException("AOT registry class not found: " + className);
-            }
-            return resolution.resolve();
+            resolution = typePool.describe(className);
         } catch (RuntimeException exception) {
             throw new IllegalStateException("AOT registry class not found: " + className, exception);
         }
+        if (!resolution.isResolved()) {
+            throw new IllegalStateException("AOT registry class not found: " + className);
+        }
+        return resolution.resolve();
     }
 
     private static int normalizeMaxMessageLength(int value, String ownerName) {
@@ -228,9 +230,7 @@ final class RegistryRouteGraphBuilder {
             }
             if (containerName.equals(name)) {
                 AnnotationDescription[] nested = annotation.getValue("value").resolve(AnnotationDescription[].class);
-                for (AnnotationDescription entry : nested) {
-                    collected.add(entry);
-                }
+                Collections.addAll(collected, nested);
             }
         }
         return collected.toArray(AnnotationDescription[]::new);
@@ -242,9 +242,7 @@ final class RegistryRouteGraphBuilder {
             return List.of();
         }
         LinkedHashSet<String> uniqueNames = new LinkedHashSet<>();
-        for (String name : fieldNames) {
-            uniqueNames.add(name);
-        }
+        Collections.addAll(uniqueNames, fieldNames);
         List<FieldExtractorRef> result = new ArrayList<>(uniqueNames.size());
         for (String fieldName : uniqueNames) {
             FieldExtractorRef extractor = allFieldExtractors.get(fieldName);

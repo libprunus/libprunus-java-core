@@ -124,8 +124,4 @@ public final class BindingClassGenerator {
         mv.visitMaxs(0, 0);
         mv.visitEnd();
     }
-
-    static void pushInt(MethodVisitor mv, int value) {
-        AsmGenSupport.pushInt(mv, value);
-    }
 }

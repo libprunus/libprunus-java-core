@@ -204,7 +204,7 @@ public final class LogRuntime {
 
     public static ClassValue<Boolean> buildWhitelistCache(String[] whitelistNames) {
         Objects.requireNonNull(whitelistNames, "whitelistNames must not be null");
-        Set<String> nameSet = new HashSet<>(whitelistNames.length);
+        Set<String> nameSet = HashSet.newHashSet(whitelistNames.length);
         for (String name : whitelistNames) {
             Objects.requireNonNull(name, "whitelistNames must not contain null entries");
             if (!nameSet.add(name)) {
@@ -222,10 +222,6 @@ public final class LogRuntime {
 
     public static boolean isWhitelistedCached(Class<?> c, ClassValue<Boolean> cache) {
         return c != null && cache.get(c);
-    }
-
-    static boolean isConfiguredWhitelisted(Class<?> type) {
-        return globalConfigBinding().isWhitelisted(type);
     }
 
     /**

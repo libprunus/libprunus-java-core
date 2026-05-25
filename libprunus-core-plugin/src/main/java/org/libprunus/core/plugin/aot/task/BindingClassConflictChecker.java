@@ -1,5 +1,6 @@
 package org.libprunus.core.plugin.aot.task;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -12,8 +13,9 @@ final class BindingClassConflictChecker {
 
     public static Optional<String> checkSpiDescriptorUniqueness(List<String> spiSourceJars) {
         Objects.requireNonNull(spiSourceJars, "spiSourceJars");
-        if (spiSourceJars.size() > 1) {
-            return Optional.of("Multiple SPI service descriptors for LogConfig found in: " + spiSourceJars);
+        List<String> unique = List.copyOf(new LinkedHashSet<>(spiSourceJars));
+        if (unique.size() > 1) {
+            return Optional.of("Multiple SPI service descriptors for LogConfig found in: " + unique);
         }
         return Optional.empty();
     }
@@ -21,8 +23,9 @@ final class BindingClassConflictChecker {
     public static Optional<String> checkBindingClassUniqueness(String bindingClass, List<String> sourceJars) {
         Objects.requireNonNull(bindingClass, "bindingClass");
         Objects.requireNonNull(sourceJars, "sourceJars");
-        if (sourceJars.size() > 1) {
-            return Optional.of("Binding class " + bindingClass + " found in multiple jars: " + sourceJars);
+        List<String> unique = List.copyOf(new LinkedHashSet<>(sourceJars));
+        if (unique.size() > 1) {
+            return Optional.of("Binding class " + bindingClass + " found in multiple jars: " + unique);
         }
         return Optional.empty();
     }

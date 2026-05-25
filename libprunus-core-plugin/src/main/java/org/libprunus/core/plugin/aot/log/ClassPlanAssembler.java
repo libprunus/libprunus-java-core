@@ -60,6 +60,14 @@ final class ClassPlanAssembler {
             maskedParamMask = maskedParamMask != null ? maskedParamMask.clone() : null;
         }
 
+        public long[] ignoredParamMask() {
+            return ignoredParamMask != null ? ignoredParamMask.clone() : null;
+        }
+
+        public long[] maskedParamMask() {
+            return maskedParamMask != null ? maskedParamMask.clone() : null;
+        }
+
         boolean isParamIgnored(int index) {
             if (ignoredParamMask == null) return false;
             int segment = index >>> 6;

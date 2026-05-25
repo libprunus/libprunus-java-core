@@ -154,14 +154,14 @@ final class AotMethodLoggingTransformer extends AsmVisitorWrapper.AbstractBase {
         @Override
         public void visitEnd() {
             if (!fieldExtractors.isEmpty()) {
-                SyntheticMethodEmitter.emitEnrichMethod(cv, classInternalName, fieldExtractors);
+                SyntheticMethodEmitter.emitEnrichMethod(cv, fieldExtractors);
             }
             for (SyntheticMethodRequest request : syntheticRequests) {
                 if (request.context().enterLogLevel() != LogLevel.OFF) {
-                    SyntheticMethodEmitter.emitSyntheticEnterMethod(cv, classInternalName, request, fieldExtractors);
+                    SyntheticEnterEmitter.emit(cv, classInternalName, request, fieldExtractors);
                 }
                 if (request.context().exitLogLevel() != LogLevel.OFF) {
-                    SyntheticMethodEmitter.emitSyntheticExitMethod(cv, classInternalName, request, fieldExtractors);
+                    SyntheticExitEmitter.emit(cv, classInternalName, request, fieldExtractors);
                 }
             }
             super.visitEnd();

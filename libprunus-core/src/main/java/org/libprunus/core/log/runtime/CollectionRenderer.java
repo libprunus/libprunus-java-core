@@ -49,7 +49,7 @@ final class CollectionRenderer implements TypeRenderer {
             } else {
                 renderIterator(context, collection.iterator());
             }
-        } catch (ConcurrentModificationException | IndexOutOfBoundsException ignored) {
+        } catch (ConcurrentModificationException | IndexOutOfBoundsException _) {
             context.forceAppendAuditMarker(StringBuilderWithContext.CONCURRENT_MODIFICATION_MARKER);
             return;
         } catch (Throwable throwable) {

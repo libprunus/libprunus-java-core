@@ -7,7 +7,6 @@ import java.util.Optional;
 
 final class TypeNode {
 
-    private final String binaryName;
     private final String packageName;
     private final String className;
     private final boolean isRegistryClass;
@@ -21,7 +20,6 @@ final class TypeNode {
     private final List<FieldRenderSlot> toStringFieldChain;
 
     TypeNode(
-            String binaryName,
             String packageName,
             String className,
             boolean isRegistryClass,
@@ -32,7 +30,6 @@ final class TypeNode {
             List<MethodNode> declaredMethods,
             List<FieldNode> declaredFields,
             List<FieldRenderSlot> toStringFieldChain) {
-        this.binaryName = binaryName;
         this.packageName = packageName;
         this.className = className;
         this.isRegistryClass = isRegistryClass;
@@ -41,7 +38,7 @@ final class TypeNode {
         this.methodRule = methodRule;
         this.toStringRule = toStringRule;
         this.declaredMethods = List.copyOf(declaredMethods);
-        Map<String, MethodNode> index = new HashMap<>(declaredMethods.size() * 2);
+        Map<String, MethodNode> index = HashMap.newHashMap(declaredMethods.size());
         for (MethodNode node : declaredMethods) {
             index.put(node.methodName() + node.methodDescriptor(), node);
         }
@@ -54,10 +51,6 @@ final class TypeNode {
         return declaredMethodIndex.get(name + descriptor);
     }
 
-    String binaryName() {
-        return binaryName;
-    }
-
     String packageName() {
         return packageName;
     }
@@ -66,24 +59,12 @@ final class TypeNode {
         return className;
     }
 
-    boolean isRegistryClass() {
-        return isRegistryClass;
-    }
-
-    boolean hasClassLevelIgnore() {
-        return hasClassLevelIgnore;
-    }
-
     Family typeLevelFamily() {
         return typeLevelFamily;
     }
 
     Optional<MethodLoggingRule> methodRule() {
         return methodRule;
-    }
-
-    Optional<ToStringRule> toStringRule() {
-        return toStringRule;
     }
 
     boolean methodEligible() {

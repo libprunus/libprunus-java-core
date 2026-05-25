@@ -13,6 +13,7 @@ dependencies {
 
     testImplementation(gradleTestKit())
     testImplementation(libs.logback.classic)
+    testImplementation(libs.cfr)
 }
 
 gradlePlugin {
@@ -28,4 +29,14 @@ publishing {
     repositories {
         mavenLocal()
     }
+}
+
+tasks.register<JavaExec>("inspectAotBytecode") {
+    group = "verification"
+    description =
+        "Dumps AOT-transformed class files, javap disassembly, and cfr-decompiled sources to build/aot-inspection for human review"
+    dependsOn(tasks.named("testClasses"))
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("org.libprunus.core.plugin.aot.log.testutil.AotBytecodeInspector")
+    args(layout.buildDirectory.get().dir("aot-inspection").asFile.absolutePath)
 }

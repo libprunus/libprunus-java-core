@@ -21,7 +21,7 @@ final class ObjectMethodSignatures {
         TypeDescription objectType = TypeDescription.ForLoadedType.of(Object.class);
         Set<String> collected = new HashSet<>();
         for (MethodDescription method : objectType.getDeclaredMethods()) {
-            collected.add(method.getName() + method.getDescriptor());
+            collected.add(method.getInternalName() + method.getDescriptor());
         }
         return Set.copyOf(collected);
     }

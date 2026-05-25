@@ -271,7 +271,7 @@ final class MethodFamilyResolver {
                     queue.add(iface);
                 }
             }
-        } catch (TypePool.Resolution.NoSuchTypeException ignored) {
+        } catch (TypePool.Resolution.NoSuchTypeException _) {
         }
     }
 

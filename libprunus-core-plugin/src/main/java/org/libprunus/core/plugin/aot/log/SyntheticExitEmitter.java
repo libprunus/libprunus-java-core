@@ -30,7 +30,7 @@ final class SyntheticExitEmitter {
                 WeavingInternalNames.SYNTHETIC_EXIT_PREFIX + method.getInternalName() + request.overloadSuffix();
         MethodExitReturnPlanConsumer.ExitReturnPlan exitReturn =
                 MethodExitReturnPlanConsumer.consume(method, request.methodPlan());
-        String descriptor = SyntheticMethodEmitter.buildSyntheticExitDescriptor(method, exitReturn.returnType());
+        String descriptor = SyntheticMethodEmitter.buildSyntheticExitDescriptor(exitReturn.returnType());
 
         MethodVisitor mv = cv.visitMethod(
                 Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC, methodName, descriptor, null, null);

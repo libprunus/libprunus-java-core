@@ -36,8 +36,8 @@ public final class PrunusPluginConstants {
 
     // === Section 6: External contract FQCN / annotation binary names + CallsiteBindingProtocol mirror ===
     /**
-     * Contract surface: these FQCN strings mirror real classes in libprunus-core; renaming requires sync with the
-     * AotLogSemanticContractTestKit.
+     * Contract surface: these FQCN strings mirror real classes in libprunus-core; renaming requires sync with
+     * PrunusPluginConstantsMirrorSpec which Class.forName each FQCN against the test classpath.
      */
     public static final String ABSTRACT_LOG_CONFIG_FQCN = "org.libprunus.core.log.runtime.AbstractLogConfig";
 

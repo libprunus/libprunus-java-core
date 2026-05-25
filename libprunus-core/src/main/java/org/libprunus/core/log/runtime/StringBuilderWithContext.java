@@ -202,7 +202,8 @@ public final class StringBuilderWithContext {
             builder.append(normalizedText);
             return true;
         }
-        return triggerTruncation(normalizedText);
+        triggerTruncation(normalizedText);
+        return false;
     }
 
     public boolean append(CharSequence value) {
@@ -214,7 +215,8 @@ public final class StringBuilderWithContext {
             builder.append(normalizedValue);
             return true;
         }
-        return triggerTruncation(normalizedValue);
+        triggerTruncation(normalizedValue);
+        return false;
     }
 
     public boolean append(boolean value) {
@@ -339,16 +341,16 @@ public final class StringBuilderWithContext {
         return false;
     }
 
-    private boolean triggerTruncation(CharSequence overflowText) {
+    private void triggerTruncation(CharSequence overflowText) {
         truncated = true;
         int remaining = maxMessageLength - builder.length();
         if (remaining >= TRUNCATION_SUFFIX_LENGTH) {
             int cutPoint = adjustCutPointForSurrogate(overflowText, remaining - TRUNCATION_SUFFIX_LENGTH);
             builder.append(overflowText, 0, cutPoint);
             builder.append(TRUNCATION_SUFFIX);
-            return false;
+            return;
         }
-        return triggerTruncationBase();
+        triggerTruncationBase();
     }
 
     private boolean appendSurrogateEscape(char value) {
@@ -484,8 +486,8 @@ public final class StringBuilderWithContext {
      * still runs when this method rethrows; this helper deliberately does not perform any cleanup.
      */
     static void handleRenderError(StringBuilderWithContext context, Throwable throwable) {
-        if (throwable instanceof Error && !(throwable instanceof StackOverflowError)) {
-            throw (Error) throwable;
+        if (throwable instanceof Error error && !(error instanceof StackOverflowError)) {
+            throw error;
         }
         context.appendThrowableFallback(throwable);
     }
@@ -495,30 +497,30 @@ public final class StringBuilderWithContext {
         if (stringBuilder != null) {
             StringBuilderPool.release(stringBuilder);
         }
-        if (throwable instanceof Error && !(throwable instanceof StackOverflowError)) {
-            throw (Error) throwable;
+        if (throwable instanceof Error error && !(error instanceof StackOverflowError)) {
+            throw error;
         }
         reportLoggingFailure(ownerAndMethod, throwable);
     }
 
     public static String recoverToStringFallback(
             String ownerAndMethod, StringBuilderWithContext stringBuilder, Throwable throwable) {
-        if (throwable instanceof Error && !(throwable instanceof StackOverflowError)) {
+        if (throwable instanceof Error error && !(error instanceof StackOverflowError)) {
             if (stringBuilder != null) StringBuilderPool.release(stringBuilder);
-            throw (Error) throwable;
+            throw error;
         }
         String fallback = "";
         if (stringBuilder != null) {
             try {
                 fallback = stringBuilder.builder.toString();
             } catch (Throwable toStringFailure) {
-                if (toStringFailure instanceof Error && !(toStringFailure instanceof StackOverflowError)) {
+                if (toStringFailure instanceof Error error && !(error instanceof StackOverflowError)) {
                     if (throwable != null) {
-                        toStringFailure.addSuppressed(throwable);
+                        error.addSuppressed(throwable);
                     }
-                    reportLoggingFailure(ownerAndMethod, toStringFailure);
+                    reportLoggingFailure(ownerAndMethod, error);
                     StringBuilderPool.release(stringBuilder);
-                    throw (Error) toStringFailure;
+                    throw error;
                 }
                 reportLoggingFailure(ownerAndMethod, toStringFailure);
             }
@@ -589,7 +591,8 @@ public final class StringBuilderWithContext {
         if (CharSequence.class.isAssignableFrom(type)) {
             return CHAR_SEQUENCE_RENDERER;
         }
-        if (Number.class.isAssignableFrom(type) || LogRuntime.isConfiguredWhitelisted(type)) {
+        if (Number.class.isAssignableFrom(type)
+                || LogRuntime.globalConfigBinding().isWhitelisted(type)) {
             return NUMBER_OR_WHITELIST_RENDERER;
         }
         return IdentityRenderer.INSTANCE;

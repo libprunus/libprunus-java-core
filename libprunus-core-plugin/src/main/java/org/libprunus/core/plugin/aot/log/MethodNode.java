@@ -4,10 +4,8 @@ import java.util.List;
 
 final class MethodNode {
 
-    private final String declaringClassBinaryName;
     private final String methodName;
     private final String methodDescriptor;
-    private final int accessFlags;
     private final boolean hasMethodLevelIgnore;
     private final boolean methodLoggingShapeEligible;
     private final Family methodLevelFamily;
@@ -17,10 +15,8 @@ final class MethodNode {
     private final boolean anyParameterCarriesLiteralFamily;
 
     MethodNode(
-            String declaringClassBinaryName,
             String methodName,
             String methodDescriptor,
-            int accessFlags,
             boolean hasMethodLevelIgnore,
             boolean methodLoggingShapeEligible,
             Family methodLevelFamily,
@@ -28,10 +24,8 @@ final class MethodNode {
             List<Family> parameterFamilies,
             Family returnFamily,
             boolean anyParameterCarriesLiteralFamily) {
-        this.declaringClassBinaryName = declaringClassBinaryName;
         this.methodName = methodName;
         this.methodDescriptor = methodDescriptor;
-        this.accessFlags = accessFlags;
         this.hasMethodLevelIgnore = hasMethodLevelIgnore;
         this.methodLoggingShapeEligible = methodLoggingShapeEligible;
         this.methodLevelFamily = methodLevelFamily;
@@ -45,20 +39,12 @@ final class MethodNode {
         return methodLevelFamily;
     }
 
-    String declaringClassBinaryName() {
-        return declaringClassBinaryName;
-    }
-
     String methodName() {
         return methodName;
     }
 
     String methodDescriptor() {
         return methodDescriptor;
-    }
-
-    int accessFlags() {
-        return accessFlags;
     }
 
     boolean hasMethodLevelIgnore() {

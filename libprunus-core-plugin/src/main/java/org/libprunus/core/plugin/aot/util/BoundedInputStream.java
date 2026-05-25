@@ -12,11 +12,11 @@ public final class BoundedInputStream extends FilterInputStream {
     private long consumed;
 
     public BoundedInputStream(InputStream in, long maxBytes, String contextMessage) {
-        super(in);
         if (maxBytes < 0) {
             throw new IllegalArgumentException("maxBytes must be >= 0: " + maxBytes);
         }
         Objects.requireNonNull(contextMessage, "contextMessage");
+        super(in);
         this.maxBytes = maxBytes;
         this.contextMessage = contextMessage;
     }
@@ -82,7 +82,9 @@ public final class BoundedInputStream extends FilterInputStream {
     }
 
     @Override
-    public synchronized void mark(int readlimit) {}
+    public synchronized void mark(int readlimit) {
+        // no-op: markSupported() == false; reset() throws IOException unconditionally
+    }
 
     @Override
     public synchronized void reset() throws IOException {

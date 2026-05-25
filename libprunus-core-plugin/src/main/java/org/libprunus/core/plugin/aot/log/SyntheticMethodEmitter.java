@@ -15,7 +15,7 @@ final class SyntheticMethodEmitter {
         throw new UnsupportedOperationException();
     }
 
-    static void emitEnrichMethod(ClassVisitor cv, String classInternalName, List<FieldExtractorRef> fieldExtractors) {
+    static void emitEnrichMethod(ClassVisitor cv, List<FieldExtractorRef> fieldExtractors) {
         MethodVisitor mv = cv.visitMethod(
                 Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC,
                 WeavingInternalNames.SYNTHETIC_ENRICH_METHOD,
@@ -51,22 +51,6 @@ final class SyntheticMethodEmitter {
         mv.visitEnd();
     }
 
-    static void emitSyntheticEnterMethod(
-            ClassVisitor cv,
-            String classInternalName,
-            AotMethodLoggingTransformer.SyntheticMethodRequest request,
-            List<FieldExtractorRef> fieldExtractors) {
-        SyntheticEnterEmitter.emit(cv, classInternalName, request, fieldExtractors);
-    }
-
-    static void emitSyntheticExitMethod(
-            ClassVisitor cv,
-            String classInternalName,
-            AotMethodLoggingTransformer.SyntheticMethodRequest request,
-            List<FieldExtractorRef> fieldExtractors) {
-        SyntheticExitEmitter.emit(cv, classInternalName, request, fieldExtractors);
-    }
-
     static String buildSyntheticEnterDescriptor(MethodDescription method) {
         List<Type> types = new ArrayList<>();
         types.add(Type.getObjectType(AsmDescriptors.LOGGER_INTERNAL_NAME));
@@ -76,7 +60,7 @@ final class SyntheticMethodEmitter {
         return Type.getMethodDescriptor(Type.VOID_TYPE, types.toArray(Type[]::new));
     }
 
-    static String buildSyntheticExitDescriptor(MethodDescription method, Type returnType) {
+    static String buildSyntheticExitDescriptor(Type returnType) {
         Type loggerType = Type.getObjectType(AsmDescriptors.LOGGER_INTERNAL_NAME);
         if (returnType == Type.VOID_TYPE) {
             return Type.getMethodDescriptor(Type.VOID_TYPE, loggerType);

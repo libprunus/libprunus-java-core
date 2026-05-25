@@ -48,7 +48,7 @@ final class LightweightInjectionPlanConsumer {
                 WeavingInternalNames.SYNTHETIC_ENTER_PREFIX + methodName + overloadSuffix,
                 SyntheticMethodEmitter.buildSyntheticEnterDescriptor(method),
                 WeavingInternalNames.SYNTHETIC_EXIT_PREFIX + methodName + overloadSuffix,
-                SyntheticMethodEmitter.buildSyntheticExitDescriptor(method, exitReturnType),
+                SyntheticMethodEmitter.buildSyntheticExitDescriptor(exitReturnType),
                 returnIgnored);
     }
 

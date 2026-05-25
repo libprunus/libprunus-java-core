@@ -39,7 +39,7 @@ final class MapRenderer implements TypeRenderer {
             if (!map.isEmpty()) {
                 renderMapEntries(context, map);
             }
-        } catch (ConcurrentModificationException ignored) {
+        } catch (ConcurrentModificationException _) {
             context.forceAppendAuditMarker(StringBuilderWithContext.CONCURRENT_MODIFICATION_MARKER);
             return;
         } catch (Throwable throwable) {

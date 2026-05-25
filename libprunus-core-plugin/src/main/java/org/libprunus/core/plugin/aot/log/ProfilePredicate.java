@@ -25,6 +25,9 @@ final class ProfilePredicate {
             return false;
         }
         for (String suffix : suffixes) {
+            if (suffix.isEmpty()) {
+                continue;
+            }
             if (className.endsWith(suffix)) {
                 return true;
             }

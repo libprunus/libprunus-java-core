@@ -124,7 +124,7 @@ final class LogConfigProviderScanner {
             Path targetRealPath = targetLexicalPath.toRealPath();
             ensureConfined(rootRealPath, targetRealPath, resourcePath);
             return Files.isRegularFile(targetRealPath);
-        } catch (IOException e) {
+        } catch (IOException _) {
             return false;
         }
     }

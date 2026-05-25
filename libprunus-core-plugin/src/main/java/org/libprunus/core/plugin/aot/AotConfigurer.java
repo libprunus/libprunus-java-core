@@ -26,6 +26,8 @@ import org.libprunus.core.plugin.buildlogic.JavaBuildExtension;
 public final class AotConfigurer {
 
     private static final String MAIN_BYTE_BUDDY_TASK_NAME = "byteBuddy";
+    private static final String ONLY_IF_APPLICATION_MODE = "AOT enabled in application mode";
+    private static final String ONLY_IF_AOT_ENABLED = "AOT enabled";
 
     private static final List<PackagingHook> PACKAGING_HOOKS = List.of(
             new PackagingHook(
@@ -77,8 +79,8 @@ public final class AotConfigurer {
         registerPackagingVerificationTasks(resolveProviderConflictTask, generateAotBindingTask);
         registerGenerateLibraryWhitelistTask();
 
-        resolveProviderConflictTask.configure(t -> t.onlyIf("AOT enabled in application mode", applicationModeOnlyIf));
-        generateAotBindingTask.configure(t -> t.onlyIf("AOT enabled in application mode", applicationModeOnlyIf));
+        resolveProviderConflictTask.configure(t -> t.onlyIf(ONLY_IF_APPLICATION_MODE, applicationModeOnlyIf));
+        generateAotBindingTask.configure(t -> t.onlyIf(ONLY_IF_APPLICATION_MODE, applicationModeOnlyIf));
         project.getTasks()
                 .named(PrunusPluginConstants.GENERATE_LIBRARY_WHITELIST_TASK)
                 .configure(t -> t.onlyIf("AOT enabled in library mode", libraryModeOnlyIf));
@@ -142,7 +144,7 @@ public final class AotConfigurer {
                 .map(dir -> portableRelativePath(projectDirPath, dir.getAsFile().toPath()));
 
         registerByteBuddyTaskInputs(task, aot.getLogRegistryClass(), classesOutputDirPath, actualRuntimeClasspath);
-        task.onlyIf("AOT enabled", enabledOnlyIf);
+        task.onlyIf(ONLY_IF_AOT_ENABLED, enabledOnlyIf);
     }
 
     private FileCollection resolveRuntimeClasspath(SourceSet sourceSet) {
@@ -172,7 +174,7 @@ public final class AotConfigurer {
     }
 
     private <T extends AbstractAotActionTask> void bindCommonAotProperties(T task) {
-        task.onlyIf("AOT enabled", enabledOnlyIf);
+        task.onlyIf(ONLY_IF_AOT_ENABLED, enabledOnlyIf);
         task.getRegistryClass().set(aot.getLogRegistryClass());
         task.getTargetCompatibility().set(javaBuild.getTargetJavaVersion().map(String::valueOf));
     }
@@ -245,7 +247,7 @@ public final class AotConfigurer {
                                     .set(project.getProviders()
                                             .gradleProperty(PrunusPluginConstants.AOT_PROVIDER_BINDING_CLASS_PROPERTY)
                                             .orElse(""));
-                            task.onlyIf("AOT enabled", enabledOnlyIf);
+                            task.onlyIf(ONLY_IF_AOT_ENABLED, enabledOnlyIf);
                         });
     }
 
@@ -308,7 +310,7 @@ public final class AotConfigurer {
                                         .named(hook.archiveTaskName(), AbstractArchiveTask.class)
                                         .flatMap(AbstractArchiveTask::getArchiveFile));
                     });
-            verifyTask.configure(t -> t.onlyIf("AOT enabled in application mode", applicationModeOnlyIf));
+            verifyTask.configure(t -> t.onlyIf(ONLY_IF_APPLICATION_MODE, applicationModeOnlyIf));
             project.getTasks().named("check").configure(checkTask -> checkTask.dependsOn(verifyTask));
         });
     }

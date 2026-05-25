@@ -30,6 +30,7 @@ public abstract class VerifyPackagedProviderBindingTask extends DefaultTask {
 
     private static final long MAX_SPI_ENTRY_BYTES = 1024L * 1024L;
     private static final int MAX_SPI_LINE_LENGTH = 8192;
+    private static final String MAX_SUFFIX = ", max=";
 
     @InputFile
     @PathSensitive(PathSensitivity.NONE)
@@ -106,7 +107,7 @@ public abstract class VerifyPackagedProviderBindingTask extends DefaultTask {
                     + entry.getName()
                     + ", size="
                     + entrySize
-                    + ", max="
+                    + MAX_SUFFIX
                     + MAX_SPI_ENTRY_BYTES);
         }
 
@@ -121,7 +122,7 @@ public abstract class VerifyPackagedProviderBindingTask extends DefaultTask {
                             + entry.getName()
                             + ", lineLength="
                             + line.length()
-                            + ", max="
+                            + MAX_SUFFIX
                             + MAX_SPI_LINE_LENGTH);
                 }
                 int commentIndex = line.indexOf('#');
@@ -133,14 +134,11 @@ public abstract class VerifyPackagedProviderBindingTask extends DefaultTask {
                     providers.add(normalized);
                 }
             }
-        } catch (IOException e) {
-            if (e instanceof ResourceLimitExceededException) {
-                throw ctx.failure("Packaged SPI entry exceeded max bytes while reading: entry="
-                        + entry.getName()
-                        + ", max="
-                        + MAX_SPI_ENTRY_BYTES);
-            }
-            throw e;
+        } catch (ResourceLimitExceededException _) {
+            throw ctx.failure("Packaged SPI entry exceeded max bytes while reading: entry="
+                    + entry.getName()
+                    + MAX_SUFFIX
+                    + MAX_SPI_ENTRY_BYTES);
         }
         return providers;
     }
