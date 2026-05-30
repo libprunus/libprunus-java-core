@@ -1,6 +1,7 @@
 package org.libprunus.core.config
 
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -47,10 +48,14 @@ class ConfigurationRepositoryConcurrentRefreshIntegrationSpec extends Specificat
         def sampledRefIsRepoRef = new AtomicBoolean(true)
         def unexpected = ConcurrentHashMap.newKeySet()
         def pool = Executors.newFixedThreadPool(9)
+        def allReady = new CountDownLatch(9)
+        def startGate = new CountDownLatch(1)
 
         when: "writer flips, readers sample"
         def writerDone = new AtomicBoolean(false)
         def writer = pool.submit({
+            allReady.countDown()
+            startGate.await()
             try {
                 for (int i = 0; i < 4096; i++) {
                     repository.refresh(new CoreRuntimeConfig(new LogRuntimeConfig(i % 2 == 0)))
@@ -61,6 +66,8 @@ class ConfigurationRepositoryConcurrentRefreshIntegrationSpec extends Specificat
         } as Runnable)
         def readers = (1..8).collect {
             pool.submit({
+                allReady.countDown()
+                startGate.await()
                 while (!writerDone.get()) {
                     try {
                         def activeRef = LogRuntime.ACTIVE_CONFIG_REF
@@ -84,6 +91,8 @@ class ConfigurationRepositoryConcurrentRefreshIntegrationSpec extends Specificat
                 }
             } as Runnable)
         }
+        assert allReady.await(10, TimeUnit.SECONDS), "worker threads failed to reach start gate"
+        startGate.countDown()
         writer.get(30, TimeUnit.SECONDS)
         readers*.get(30, TimeUnit.SECONDS)
 

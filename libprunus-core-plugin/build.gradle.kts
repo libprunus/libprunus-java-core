@@ -25,12 +25,6 @@ gradlePlugin {
     }
 }
 
-publishing {
-    repositories {
-        mavenLocal()
-    }
-}
-
 tasks.register<JavaExec>("inspectAotBytecode") {
     group = "verification"
     description =

@@ -68,6 +68,25 @@ class LibprunusCorePluginIntegrationSpec extends Specification {
         secondResult.output.readLines().any { it.contains(':byteBuddy') }
     }
 
+    def "compiled classes stay in classes/java/main and no Byte Buddy reroute happens when AOT is left disabled"() {
+        given:
+        def repoRoot = findRepoRoot()
+        writeAotDisabledProject(testProjectDir, repoRoot)
+
+        when:
+        def result = GradleRunner.create()
+                .withProjectDir(testProjectDir)
+                .withPluginClasspath()
+                .withArguments('classes')
+                .build()
+
+        then:
+        result.output.contains('BUILD SUCCESSFUL')
+        new File(testProjectDir, 'build/classes/java/main/sample/PlainService.class').isFile()
+        !new File(testProjectDir, 'build/classes/java/javaByteBuddyRaw').exists()
+        !result.output.readLines().any { it.contains(':byteBuddy') }
+    }
+
     def "byteBuddy task registers classes output directory as project-relative forward-slash path"() {
         given:
         def repoRoot = findRepoRoot()
@@ -218,6 +237,34 @@ class LibprunusCorePluginIntegrationSpec extends Specification {
 
     private static void writeSampleProject(File projectDir, File repoRoot) {
         writeSampleProject(projectDir, repoRoot, [])
+    }
+
+    private static void writeAotDisabledProject(File projectDir, File repoRoot) {
+        def escapedRepoRoot = repoRoot.absolutePath.replace('\\', '\\\\')
+        new File(projectDir, 'settings.gradle').text = """
+rootProject.name = 'aot-disabled-app'
+includeBuild('${escapedRepoRoot}')
+""".stripIndent()
+        new File(projectDir, 'build.gradle').text = '''
+plugins {
+    id 'org.libprunus.libprunus-core-plugin'
+}
+
+repositories {
+    mavenCentral()
+}
+'''
+        def sourceDir = new File(projectDir, 'src/main/java/sample')
+        sourceDir.mkdirs()
+        new File(sourceDir, 'PlainService.java').text = '''
+package sample;
+
+public class PlainService {
+    public String greet(String name) {
+        return "hi " + name;
+    }
+}
+'''
     }
 
     private static void writeExplicitBindingProperty(File projectDir, String bindingClassName) {

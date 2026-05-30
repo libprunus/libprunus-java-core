@@ -9,7 +9,7 @@ import spock.lang.Specification
 
 class AotConfigurerOnlyIfIntegrationSpec extends Specification {
 
-    def "AOT action task onlyIf is not satisfied when aot enabled is false even when the mode matches"() {
+    def "AOT action task is not registered when aot enabled is false even when the mode matches"() {
         given:
         def project = ProjectBuilder.builder().withName("apply-disabled-onlyif-${mode}-${taskName}").build()
         project.pluginManager.apply(JavaLibraryPlugin)
@@ -22,10 +22,9 @@ class AotConfigurerOnlyIfIntegrationSpec extends Specification {
         when:
         new AotConfigurer(project, aot, javaBuild).apply()
         project.evaluate()
-        def task = project.tasks.getByName(taskName)
 
         then:
-        !task.onlyIf.isSatisfiedBy(task)
+        project.tasks.findByName(taskName) == null
 
         where:
         mode                | taskName
@@ -33,13 +32,13 @@ class AotConfigurerOnlyIfIntegrationSpec extends Specification {
         AotMode.LIBRARY     | PrunusPluginConstants.GENERATE_LIBRARY_WHITELIST_TASK
     }
 
-    def "resolveLogConfigProviderConflict task onlyIf is satisfied when aot enabled is true and APPLICATION mode and not satisfied when enabled is false"() {
+    def "resolveLogConfigProviderConflict task onlyIf is satisfied when aot enabled is true and APPLICATION mode"() {
         given:
-        def project = ProjectBuilder.builder().withName("apply-resolve-task-onlyif-${enabled}").build()
+        def project = ProjectBuilder.builder().withName("apply-resolve-task-onlyif-enabled").build()
         project.pluginManager.apply(JavaLibraryPlugin)
         def javaBuild = project.objects.newInstance(JavaBuildExtension)
         def aot = project.objects.newInstance(AotExtension)
-        aot.enabled.set(enabled)
+        aot.enabled.set(true)
         aot.logRegistryClass.set("sample.Registry")
         aot.mode.set(AotMode.APPLICATION)
 
@@ -49,12 +48,7 @@ class AotConfigurerOnlyIfIntegrationSpec extends Specification {
         def task = project.tasks.getByName(PrunusPluginConstants.RESOLVE_LOG_CONFIG_PROVIDER_CONFLICT_TASK)
 
         then:
-        task.onlyIf.isSatisfiedBy(task) == expectedSatisfied
-
-        where:
-        enabled || expectedSatisfied
-        true    || true
-        false   || false
+        task.onlyIf.isSatisfiedBy(task)
     }
 
     def "registerGenerateAotBindingTask maps targetJavaVersion to targetCompatibility string"() {

@@ -64,8 +64,10 @@ public final class LogRuntimeDataPlaneVisibilityProbe {
         reader.start();
 
         readerReady.await();
-        for (int i = 0; i < flipCount; i++) {
+        int i = 0;
+        while (i < flipCount || !observedTrue.get() || !observedFalse.get()) {
             activeRef.set(new CoreRuntimeConfig(new LogRuntimeConfig(i % 2 == 0)));
+            i++;
         }
         writerDone.set(true);
         reader.join();

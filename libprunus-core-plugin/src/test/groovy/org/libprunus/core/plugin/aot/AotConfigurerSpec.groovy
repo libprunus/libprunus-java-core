@@ -1,6 +1,8 @@
 package org.libprunus.core.plugin.aot
 
 import java.nio.file.Path
+import net.bytebuddy.build.gradle.AbstractByteBuddyTask
+import org.gradle.api.ProjectConfigurationException
 import org.gradle.api.UnknownDomainObjectException
 import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.plugins.JavaPluginExtension
@@ -45,7 +47,7 @@ class AotConfigurerSpec extends Specification {
         project.evaluate()
 
         then:
-        def ex = thrown(org.gradle.api.ProjectConfigurationException)
+        def ex = thrown(ProjectConfigurationException)
         ex.cause instanceof IllegalStateException
 
         where:
@@ -66,7 +68,7 @@ class AotConfigurerSpec extends Specification {
         project.evaluate()
 
         then:
-        def ex = thrown(org.gradle.api.ProjectConfigurationException)
+        def ex = thrown(ProjectConfigurationException)
         ex.cause.message.contains("logRegistryClass must be set when prunus.aot.enabled is true")
         ex.cause.message.contains("Either set logRegistryClass to a fully-qualified @LogRegistry class name")
         ex.cause.message.contains("leave enabled at its default (false) to disable AOT entirely")
@@ -86,7 +88,7 @@ class AotConfigurerSpec extends Specification {
         project.evaluate()
 
         then:
-        thrown(org.gradle.api.ProjectConfigurationException)
+        thrown(ProjectConfigurationException)
         project.tasks.findByName(PrunusPluginConstants.GENERATE_AOT_BINDING_TASK) != null
         project.tasks.findByName(PrunusPluginConstants.RESOLVE_LOG_CONFIG_PROVIDER_CONFLICT_TASK) != null
         project.tasks.findByName(PrunusPluginConstants.GENERATE_LIBRARY_WHITELIST_TASK) != null
@@ -106,14 +108,14 @@ class AotConfigurerSpec extends Specification {
         project.evaluate()
 
         then:
-        def ex = thrown(org.gradle.api.ProjectConfigurationException)
+        def ex = thrown(ProjectConfigurationException)
         ex.cause instanceof IllegalStateException
         ex.cause.message.contains("logRegistryClass must be set when prunus.aot.enabled is true")
     }
 
-    def "apply afterEvaluate validation is skipped when enabled is false even if logRegistryClass is blank"() {
+    def "apply wires no AOT pipeline and never validates when enabled is false even if logRegistryClass is blank"() {
         given:
-        def project = ProjectBuilder.builder().withName("apply-validate-skipped-${blank.replace(' ', '_') ?: 'empty'}").build()
+        def project = ProjectBuilder.builder().withName("apply-disabled-zero-intrusion-${blank.replace(' ', '_') ?: 'empty'}").build()
         project.pluginManager.apply(JavaLibraryPlugin)
         def javaBuild = project.objects.newInstance(JavaBuildExtension)
         def aot = project.objects.newInstance(AotExtension)
@@ -123,18 +125,19 @@ class AotConfigurerSpec extends Specification {
         when:
         new AotConfigurer(project, aot, javaBuild).apply()
         project.evaluate()
-        def generateTask = project.tasks.getByName(PrunusPluginConstants.GENERATE_AOT_BINDING_TASK)
 
         then:
         noExceptionThrown()
-        project.tasks.findByName(PrunusPluginConstants.GENERATE_AOT_BINDING_TASK) != null
-        !generateTask.onlyIf.isSatisfiedBy(generateTask)
+        project.tasks.findByName(PrunusPluginConstants.GENERATE_AOT_BINDING_TASK) == null
+        project.tasks.findByName(PrunusPluginConstants.RESOLVE_LOG_CONFIG_PROVIDER_CONFLICT_TASK) == null
+        project.tasks.findByName(PrunusPluginConstants.GENERATE_LIBRARY_WHITELIST_TASK) == null
+        project.tasks.withType(AbstractByteBuddyTask).isEmpty()
 
         where:
         blank << ["", "   "]
     }
 
-    def "apply fails fast when Java plugin extension is absent"() {
+    def "apply surfaces missing Java plugin extension at evaluation time and wires no AOT tasks"() {
         given:
         def project = ProjectBuilder.builder().withName("apply-no-java-plugin").build()
         def javaBuild = project.objects.newInstance(JavaBuildExtension)
@@ -144,9 +147,11 @@ class AotConfigurerSpec extends Specification {
 
         when:
         new AotConfigurer(project, aot, javaBuild).apply()
+        project.evaluate()
 
         then:
-        thrown(UnknownDomainObjectException)
+        def ex = thrown(ProjectConfigurationException)
+        ex.cause instanceof UnknownDomainObjectException
         project.tasks.findByName(PrunusPluginConstants.GENERATE_AOT_BINDING_TASK) == null
         project.tasks.findByName(PrunusPluginConstants.RESOLVE_LOG_CONFIG_PROVIDER_CONFLICT_TASK) == null
         project.tasks.findByName(PrunusPluginConstants.GENERATE_LIBRARY_WHITELIST_TASK) == null
@@ -157,7 +162,7 @@ class AotConfigurerSpec extends Specification {
         def project = ProjectBuilder.builder().withName("apply-no-main-source-set").build()
         project.pluginManager.apply(JavaLibraryPlugin)
         def javaBuild = project.objects.newInstance(JavaBuildExtension)
-        def javaExtension = project.extensions.getByType(org.gradle.api.plugins.JavaPluginExtension)
+        def javaExtension = project.extensions.getByType(JavaPluginExtension)
         javaExtension.sourceSets.remove(javaExtension.sourceSets.getByName("main"))
         def aot = project.objects.newInstance(AotExtension)
         aot.enabled.set(true)
@@ -168,8 +173,9 @@ class AotConfigurerSpec extends Specification {
         project.evaluate()
 
         then:
-        def ex = thrown(UnknownDomainObjectException)
-        ex.message.contains("main") || (ex.cause != null && ex.cause.message.contains("main"))
+        def ex = thrown(ProjectConfigurationException)
+        ex.cause instanceof UnknownDomainObjectException
+        ex.cause.message.contains("main") || (ex.cause.cause != null && ex.cause.cause.message.contains("main"))
     }
 
     def "portableRelativePath returns forward-slash relative path on POSIX"() {

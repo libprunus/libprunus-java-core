@@ -69,6 +69,15 @@ public final class AotConfigurer {
     }
 
     public void apply() {
+        project.afterEvaluate(unused -> {
+            if (aot.getEnabled().getOrElse(false)) {
+                wireAotPipeline();
+            }
+        });
+        project.afterEvaluate(unused -> validateLogRegistryClassPresentWhenEnabled());
+    }
+
+    private void wireAotPipeline() {
         configureByteBuddy();
 
         TaskProvider<ResolveLogConfigProviderConflictTask> resolveProviderConflictTask =
@@ -84,8 +93,6 @@ public final class AotConfigurer {
         project.getTasks()
                 .named(PrunusPluginConstants.GENERATE_LIBRARY_WHITELIST_TASK)
                 .configure(t -> t.onlyIf("AOT enabled in library mode", libraryModeOnlyIf));
-
-        project.afterEvaluate(unused -> validateLogRegistryClassPresentWhenEnabled());
     }
 
     private void validateLogRegistryClassPresentWhenEnabled() {

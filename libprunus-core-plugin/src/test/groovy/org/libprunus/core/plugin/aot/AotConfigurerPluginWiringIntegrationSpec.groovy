@@ -9,9 +9,9 @@ import spock.lang.Specification
 
 class AotConfigurerPluginWiringIntegrationSpec extends Specification {
 
-    def "core APPLICATION tasks are resolvable by name immediately after apply without requiring afterEvaluate"() {
+    def "core APPLICATION tasks are resolvable by name after evaluation when AOT is enabled"() {
         given:
-        def project = ProjectBuilder.builder().withName("task-ref-immediate").build()
+        def project = ProjectBuilder.builder().withName("task-ref-after-eval").build()
         project.pluginManager.apply(JavaLibraryPlugin)
         def javaBuild = project.objects.newInstance(JavaBuildExtension)
         def aot = project.objects.newInstance(AotExtension)
@@ -21,6 +21,7 @@ class AotConfigurerPluginWiringIntegrationSpec extends Specification {
 
         when:
         new AotConfigurer(project, aot, javaBuild).apply()
+        project.evaluate()
 
         then:
         project.tasks.named(PrunusPluginConstants.GENERATE_AOT_BINDING_TASK).get() != null

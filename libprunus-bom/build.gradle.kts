@@ -32,9 +32,6 @@ publishing {
             suppressPomMetadataWarningsFor("runtimeElements")
         }
     }
-    repositories {
-        mavenLocal()
-    }
 }
 
 

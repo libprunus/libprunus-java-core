@@ -46,13 +46,16 @@ class LibprunusCorePluginSpec extends Specification {
         project.tasks.findByName("spotlessKotlinGradle") != null
     }
 
-    def "apply wires aotConfigurer side effects (byteBuddy plus three aot tasks)"() {
+    def "apply wires aotConfigurer side effects (byteBuddy plus three aot tasks) when aot is enabled"() {
         given:
         def project = ProjectBuilder.builder().withName("libprunus-core-plugin-aot").build()
         def plugin = new LibprunusCorePlugin()
 
         when:
         plugin.apply(project)
+        def prunus = (PrunusExtension) project.extensions.getByName("prunus")
+        prunus.aot.enabled.set(true)
+        prunus.aot.logRegistryClass.set("com.example.SampleRegistry")
         project.evaluate()
 
         then:
@@ -110,41 +113,40 @@ class LibprunusCorePluginSpec extends Specification {
         prunus.javaBuild.targetJavaVersion.get() == 21
     }
 
-    def "aot pipeline tasks become noop when aot.enabled is false regardless of mode"() {
+    def "aot pipeline tasks are not registered when aot.enabled is false regardless of mode"() {
         given:
-        def project = ProjectBuilder.builder().withName("aot-pipeline-only-if-disabled-${mode}").build()
+        def project = ProjectBuilder.builder().withName("aot-pipeline-disabled-${mode}").build()
         def plugin = new LibprunusCorePlugin()
 
         when:
         plugin.apply(project)
         def prunus = (PrunusExtension) project.extensions.getByName("prunus")
+        prunus.aot.enabled.set(false)
         prunus.aot.logRegistryClass.set("com.example.SampleRegistry")
         prunus.aot.mode.set(mode)
         project.evaluate()
-        prunus.aot.enabled.set(false)
-        Task task = taskLookup.call(project)
 
         then:
-        !task.onlyIf.isSatisfiedBy(task)
+        taskAbsent.call(project)
 
         where:
-        mode                | taskLookup
-        AotMode.APPLICATION | { p -> p.tasks.withType(AbstractByteBuddyTask).first() }
-        AotMode.LIBRARY     | { p -> p.tasks.getByName(PrunusPluginConstants.GENERATE_LIBRARY_WHITELIST_TASK) as GenerateLibraryWhitelistTask }
+        mode                | taskAbsent
+        AotMode.APPLICATION | { p -> p.tasks.withType(AbstractByteBuddyTask).isEmpty() }
+        AotMode.LIBRARY     | { p -> p.tasks.findByName(PrunusPluginConstants.GENERATE_LIBRARY_WHITELIST_TASK) == null }
     }
 
     def "aot pipeline tasks execute when aot.enabled is true regardless of mode"() {
         given:
-        def project = ProjectBuilder.builder().withName("aot-pipeline-only-if-enabled-${mode}").build()
+        def project = ProjectBuilder.builder().withName("aot-pipeline-enabled-${mode}").build()
         def plugin = new LibprunusCorePlugin()
 
         when:
         plugin.apply(project)
         def prunus = (PrunusExtension) project.extensions.getByName("prunus")
+        prunus.aot.enabled.set(true)
         prunus.aot.logRegistryClass.set("com.example.SampleRegistry")
         prunus.aot.mode.set(mode)
         project.evaluate()
-        prunus.aot.enabled.set(true)
         Task task = taskLookup.call(project)
 
         then:

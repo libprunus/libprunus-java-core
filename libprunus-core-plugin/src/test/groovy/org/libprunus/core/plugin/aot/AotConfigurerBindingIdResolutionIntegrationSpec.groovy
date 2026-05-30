@@ -43,23 +43,6 @@ class AotConfigurerBindingIdResolutionIntegrationSpec extends Specification {
         result.output.contains(':assertMainBindingIdFromResolvedCoordinates')
     }
 
-    def "bindingId remains stable and readable when AOT is disabled because mainBindingIdProvider does not depend on enabled flag"() {
-        given:
-        def repoRoot = findRepoRoot()
-        writeSampleProjectWithProviderCoordinates(testProjectDir, repoRoot, "org.provider", "2.0.0", false, null)
-
-        when:
-        def result = GradleRunner.create()
-                .withProjectDir(testProjectDir)
-                .withPluginClasspath()
-                .withArguments('assertMainBindingIdFromResolvedCoordinates')
-                .build()
-
-        then:
-        result.output.contains('BUILD SUCCESSFUL')
-        result.output.contains(':assertMainBindingIdFromResolvedCoordinates')
-    }
-
     def "bindingId resolves at LIBRARY mode without binding generateAotBinding to the build lifecycle"() {
         given:
         def repoRoot = findRepoRoot()
