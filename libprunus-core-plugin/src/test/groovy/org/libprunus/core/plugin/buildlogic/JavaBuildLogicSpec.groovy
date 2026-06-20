@@ -4,8 +4,11 @@ import com.diffplug.gradle.spotless.SpotlessExtension
 import com.diffplug.gradle.spotless.SpotlessPlugin
 import java.math.BigDecimal
 import java.nio.file.Files
+import net.ltgt.gradle.errorprone.CheckSeverity
+import net.ltgt.gradle.errorprone.ErrorProneOptions
 import org.gradle.api.Project
 import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.compile.JavaCompile
@@ -378,6 +381,28 @@ class JavaBuildLogicSpec extends Specification {
         }
     }
 
+    def "configureTest wires spock and groovy only when spockEnabled is true"() {
+        given:
+        project = createProject("configure-test-spock-${spockEnabled}")
+        def javaBuild = project.objects.newInstance(JavaBuildExtension)
+        javaBuild.spockEnabled.set(spockEnabled)
+        subject = new JavaBuildLogic(project, javaBuild)
+        subject.applyNecessaryPlugins()
+
+        when:
+        subject.configureTest()
+        ((ProjectInternal) project).evaluate()
+
+        then:
+        project.plugins.hasPlugin("groovy") == spockEnabled
+        def testImpl = dependencyCoordinates(project, "testImplementation")
+        testImpl.contains("org.spockframework:spock-core") == spockEnabled
+        testImpl.contains("org.apache.groovy:groovy") == spockEnabled
+
+        where:
+        spockEnabled << [true, false]
+    }
+
     def "configureSpotless registers java and kotlin gradle spotless tasks"() {
         given:
         project = createProject("configure-spotless-${invokeTimes}")
@@ -440,6 +465,47 @@ class JavaBuildLogicSpec extends Specification {
         includedFiles.contains("gradle/conventions.gradle.kts")
         !includedFiles.contains("build/generated/ignored.gradle.kts")
         kotlinGradleFormat.@steps.size() >= 2
+    }
+
+    def "configureErrorProne registers jspecify api dependency and error prone tooling on errorprone configuration"() {
+        given:
+        project = createProject("configure-errorprone-deps")
+        subject = new JavaBuildLogic(project, project.objects.newInstance(JavaBuildExtension))
+        subject.applyNecessaryPlugins()
+
+        when:
+        subject.configureErrorProne()
+
+        then:
+        dependencyCoordinates(project, "api").contains("org.jspecify:jspecify")
+        def errorproneDeps = dependencyCoordinates(project, "errorprone")
+        errorproneDeps.contains("com.google.errorprone:error_prone_core")
+        errorproneDeps.contains("com.uber.nullaway:nullaway")
+    }
+
+    def "configureErrorProne enables NullAway on all compile tasks and RequireExplicitNullMarking only on main compile"() {
+        given:
+        project = createProject("configure-errorprone-options")
+        subject = new JavaBuildLogic(project, project.objects.newInstance(JavaBuildExtension))
+        subject.applyNecessaryPlugins()
+
+        when:
+        subject.configureErrorProne()
+
+        then:
+        def compileTasks = project.tasks.withType(JavaCompile)
+        compileTasks*.name.containsAll(["compileJava", "compileTestJava"])
+        compileTasks.every { task ->
+            def errorProne = (task.options as ExtensionAware).extensions.getByType(ErrorProneOptions)
+            def expectedChecks = task.name == "compileJava"
+                    ? ["NullAway", "RequireExplicitNullMarking"] as Set
+                    : ["NullAway"] as Set
+            errorProne.disableAllChecks.get() &&
+                    errorProne.checks.get().keySet() == expectedChecks &&
+                    errorProne.checks.get()["NullAway"] == CheckSeverity.ERROR &&
+                    errorProne.checkOptions.get()["NullAway:OnlyNullMarked"] == "true" &&
+                    errorProne.checkOptions.get()["NullAway:JSpecifyMode"] == "true"
+        }
     }
 
     private static JacocoViolationRule createRule(JacocoCoverageVerification verification, boolean seedExistingRule) {

@@ -4,7 +4,7 @@ import org.libprunus.core.config.CoreRuntimeConfig;
 import org.libprunus.core.log.runtime.LogRuntimeConfig;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "libprunus")
+@ConfigurationProperties(prefix = "prunus")
 public class CoreRuntimeProperties {
 
     private LogRuntimeConfig log = new LogRuntimeConfig(true);

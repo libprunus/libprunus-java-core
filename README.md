@@ -70,11 +70,16 @@ prunus {
         instructionCoverageThreshold = 0.9   // default 0.9
         lineCoverageThreshold = 0.9          // default 0.9
         branchCoverageThreshold = 0.9        // default 0.9
+        spockEnabled = true                  // default false; opt in to Spock (Groovy) tests
+        pitestEnabled = false                // default true; opt out of PIT mutation testing
+        mutationThreshold = 70               // default 70; min mutation kill %, gate runs in check after test
     }
 }
 ```
 
-`targetJavaVersion` selects the toolchain Gradle will provision (auto-download per your Gradle settings) and also sets the `--release` flag on every `JavaCompile` task. The three coverage thresholds wire into `JacocoCoverageVerification` and run as part of `check`.
+`targetJavaVersion` selects the toolchain Gradle will provision (auto-download per your Gradle settings) and also sets the `--release` flag on every `JavaCompile` task. The three coverage thresholds wire into `JacocoCoverageVerification` and run as part of `check`. `spockEnabled` (default `false`) applies the Groovy plugin and adds Spock to `testImplementation`; tests stay JUnit-only otherwise.
+
+`pitestEnabled` (default `true`) wires PIT mutation testing into `check`, running after `test`; the build fails below `mutationThreshold` (default `70`% kill rate). PIT targets `${project.group}.*`, so the consuming module must set a `group`; modules with no mutable production code pass (no-mutations is lenient, not a failure). Opt out with `pitestEnabled = false`.
 
 See [docs/usage/](docs/usage/) for AOT method logging, POJO rendering, and Spring Boot autoconfiguration.
 
@@ -90,6 +95,8 @@ Applying `org.libprunus.libprunus-core-plugin` is the single entry point. Downst
 | `jacoco` | Coverage instrumentation and verification (see [Java toolchain & coverage](#java-toolchain--coverage)). |
 | `com.diffplug.spotless` | Format gate. |
 | `net.bytebuddy.byte-buddy-gradle-plugin` | Drives AOT bytecode rewriting when AOT is enabled. |
+| `net.ltgt.errorprone` | Hosts the NullAway null-safety gate. |
+| `info.solidsoft.pitest` | PIT mutation-testing gate, bound to `check` (after `test`). |
 
 ### Conventions set on every module
 
@@ -97,6 +104,23 @@ Applying `org.libprunus.libprunus-core-plugin` is the single entry point. Downst
 - **Test** — JUnit Platform with `org.junit.jupiter:junit-jupiter`, finalized by the JaCoCo report.
 - **Coverage gates** — `JacocoCoverageVerification` runs as part of `check`.
 - **Format** — Palantir Java format on `src/**/*.java`, enforced by Spotless.
+- **Null-safety** — NullAway (Error Prone, JSpecify mode): every production package must be `@NullMarked` (else the build fails), and `@NullMarked` code is null-checked at `error` severity.
+- **Mutation testing** — PIT runs as part of `check` (after `test`); the build fails below `mutationThreshold` (default 70%). Requires the module's `group`. Opt out with `pitestEnabled = false`.
+
+### Tool versions passed downstream
+
+These versions are pinned in `gradle/libs.versions.toml` (single source), bundled into the plugin, and injected into the consumer build — so consumers need no version management for them:
+
+| Tool | Version | Role |
+| --- | --- | --- |
+| `com.google.errorprone:error_prone_core` | 2.38.0 | Error Prone compiler hosting NullAway |
+| `com.uber.nullaway:nullaway` | 0.12.15 | Null-safety checks + `RequireExplicitNullMarking` enforcement |
+| `org.jspecify:jspecify` | 1.0.0 | `@NullMarked` / `@Nullable` annotations (`api`) |
+| `org.spockframework:spock-core` | 2.4-groovy-4.0 | Spock tests (opt-in via `spockEnabled`) |
+| `org.apache.groovy:groovy` | 4.0.29 | Groovy for Spock (opt-in) |
+| `info.solidsoft.gradle.pitest:gradle-pitest-plugin` | 1.19.0 | Gradle plugin driving PIT |
+| `org.pitest:pitest` | 1.25.5 | PIT mutation engine |
+| `org.pitest:pitest-junit5-plugin` | 1.2.3 | JUnit Platform / Spock support for PIT |
 
 ## Documentation
 

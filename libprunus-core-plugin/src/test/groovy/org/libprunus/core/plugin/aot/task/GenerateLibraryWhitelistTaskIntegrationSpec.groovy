@@ -79,6 +79,10 @@ repositories {
     mavenCentral()
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone.disable('RequireExplicitNullMarking')
+}
+
 dependencies {
     implementation 'org.libprunus:libprunus-core:0.0.1-SNAPSHOT'
     implementation files('libs/unrelated-dependency.jar')

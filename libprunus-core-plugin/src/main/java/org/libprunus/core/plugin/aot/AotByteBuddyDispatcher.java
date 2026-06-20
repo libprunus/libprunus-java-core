@@ -11,6 +11,7 @@ import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
+import org.jspecify.annotations.Nullable;
 import org.libprunus.core.plugin.aot.log.AotLogByteBuddyPlugin;
 
 public final class AotByteBuddyDispatcher implements Plugin {
@@ -24,7 +25,8 @@ public final class AotByteBuddyDispatcher implements Plugin {
     private final ClassFileLocator pluginClassFileLocator;
     private volatile boolean closed = false;
 
-    public AotByteBuddyDispatcher(String registryClass, File rootLocation, File[] classpath) {
+    public AotByteBuddyDispatcher(
+            String registryClass, @Nullable File rootLocation, @Nullable File @Nullable [] classpath) {
         this(new DispatcherInputs(registryClass, toRootList(rootLocation), sanitizeClasspath(rootLocation, classpath)));
     }
 
@@ -45,14 +47,14 @@ public final class AotByteBuddyDispatcher implements Plugin {
         this.plugins = initializedPlugins;
     }
 
-    private static List<File> toRootList(File rootLocation) {
+    private static List<File> toRootList(@Nullable File rootLocation) {
         if (rootLocation == null) {
             return List.of();
         }
         return List.of(rootLocation);
     }
 
-    private static List<File> sanitizeClasspath(File rootLocation, File[] classpath) {
+    private static List<File> sanitizeClasspath(@Nullable File rootLocation, @Nullable File @Nullable [] classpath) {
         if (classpath == null || classpath.length == 0) {
             return List.of();
         }
@@ -70,8 +72,8 @@ public final class AotByteBuddyDispatcher implements Plugin {
     }
 
     @Override
-    public boolean matches(TypeDescription target) {
-        if (closed) {
+    public boolean matches(@Nullable TypeDescription target) {
+        if (closed || target == null) {
             return false;
         }
         return getOrComputePluginMatchMask(target) != 0;
@@ -122,7 +124,7 @@ public final class AotByteBuddyDispatcher implements Plugin {
     }
 
     private static final class IoExceptionAggregator {
-        private IOException aggregated;
+        private @Nullable IOException aggregated;
 
         void tryClose(Closeable resource) {
             try {
@@ -163,7 +165,7 @@ public final class AotByteBuddyDispatcher implements Plugin {
 
     private static List<RegisteredPlugin> initPlugins(
             DispatcherInputs inputs, AotCompileContext context, ClassFileLocator classFileLocator) {
-        if (inputs.registryClass() == null || inputs.registryClass().isBlank()) {
+        if (inputs.registryClass().isBlank()) {
             return List.of();
         }
         ClassFileLocator parserLocator =

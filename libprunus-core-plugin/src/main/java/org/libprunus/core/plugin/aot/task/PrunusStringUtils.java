@@ -1,12 +1,14 @@
 package org.libprunus.core.plugin.aot.task;
 
+import org.jspecify.annotations.Nullable;
+
 final class PrunusStringUtils {
 
     private PrunusStringUtils() {
         throw new UnsupportedOperationException();
     }
 
-    public static String normalize(String value) {
+    public static @Nullable String normalize(@Nullable String value) {
         if (value == null || value.isBlank()) {
             return null;
         }

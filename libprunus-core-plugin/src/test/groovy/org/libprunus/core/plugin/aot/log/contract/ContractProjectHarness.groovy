@@ -302,6 +302,10 @@ dependencies {
     runtimeOnly 'ch.qos.logback:logback-classic:1.5.16'
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone.disable('RequireExplicitNullMarking')
+}
+
 def mainClassesDir = layout.buildDirectory.dir('classes/java/main')
 def mainRuntimeClasspath = sourceSets.main.runtimeClasspath
 def dtoFqcns = [${dtoFqcnsLiteral}]

@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import org.jspecify.annotations.Nullable;
 import org.libprunus.core.plugin.aot.PrunusPluginConstants;
 
 final class LogConfigProviderScanner {
@@ -55,7 +56,7 @@ final class LogConfigProviderScanner {
         return new ScannerResult(providerSources, classSources);
     }
 
-    private static ScanHit scanEntry(File entry, String spiPath, String classPath) {
+    private static ScanHit scanEntry(File entry, @Nullable String spiPath, @Nullable String classPath) {
         if (!entry.exists()) {
             return ScanHit.NONE;
         }
@@ -68,13 +69,13 @@ final class LogConfigProviderScanner {
         return ScanHit.NONE;
     }
 
-    private static ScanHit scanDirectory(File entry, String spiPath, String classPath) {
+    private static ScanHit scanDirectory(File entry, @Nullable String spiPath, @Nullable String classPath) {
         boolean providerSource = spiPath != null && containsDirectoryResource(entry, spiPath);
         boolean classSource = classPath != null && containsDirectoryResource(entry, classPath);
         return new ScanHit(providerSource, classSource);
     }
 
-    private static ScanHit scanJar(File entry, String spiPath, String classPath) {
+    private static ScanHit scanJar(File entry, @Nullable String spiPath, @Nullable String classPath) {
         JarEntryIndex index = loadJarEntryIndex(entry);
         boolean providerSource = spiPath != null && index.contains(spiPath);
         boolean classSource = classPath != null && index.contains(classPath);

@@ -5,6 +5,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.pool.TypePool;
+import org.jspecify.annotations.Nullable;
 import org.libprunus.core.plugin.aot.AotCompileContext;
 
 public final class AotLogByteBuddyPlugin implements Plugin {
@@ -20,8 +21,8 @@ public final class AotLogByteBuddyPlugin implements Plugin {
     }
 
     @Override
-    public boolean matches(TypeDescription target) {
-        if (target.isInterface() || target.isEnum() || target.isAnnotation()) {
+    public boolean matches(@Nullable TypeDescription target) {
+        if (target == null || target.isInterface() || target.isEnum() || target.isAnnotation()) {
             return false;
         }
         return routeGraph.isRouteRelevant(target);

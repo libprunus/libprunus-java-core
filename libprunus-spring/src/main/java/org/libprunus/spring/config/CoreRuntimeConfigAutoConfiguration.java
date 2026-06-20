@@ -16,6 +16,9 @@ public class CoreRuntimeConfigAutoConfiguration implements InitializingBean {
 
     private final ClassLoader classLoader;
 
+    @SuppressWarnings(
+            "NullAway") // Spring ApplicationContext provides a non-null bean classloader; getClassLoader() is @Nullable
+    // only per the general ResourceLoader contract
     public CoreRuntimeConfigAutoConfiguration(ResourceLoader resourceLoader) {
         this.classLoader = resourceLoader.getClassLoader();
     }

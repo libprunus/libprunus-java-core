@@ -172,6 +172,7 @@ public final class LogRuntime {
         ACTIVE_CONFIG_REF = Objects.requireNonNull(configRef, "configRef must not be null");
     }
 
+    @SuppressWarnings("NullAway") // ACTIVE_CONFIG_REF contents non-null by construction; get() modeled @Nullable
     public static boolean isEnabled() {
         return ACTIVE_CONFIG_REF.get().log().enabled();
     }

@@ -1,5 +1,7 @@
 package org.libprunus.core.plugin
 
+import info.solidsoft.gradle.pitest.PitestPlugin
+import info.solidsoft.gradle.pitest.PitestPluginExtension
 import net.bytebuddy.build.gradle.AbstractByteBuddyTask
 import org.gradle.api.Task
 import org.gradle.api.plugins.GroovyPlugin
@@ -44,6 +46,47 @@ class LibprunusCorePluginSpec extends Specification {
         project.plugins.hasPlugin(JavaLibraryPlugin)
         project.tasks.findByName("spotlessJava") != null
         project.tasks.findByName("spotlessKotlinGradle") != null
+    }
+
+    def "javaBuild applies pitest by default and binds it to check as a gate ordered after test"() {
+        given:
+        def project = ProjectBuilder.builder().withName("libprunus-core-plugin-pitest-default").build()
+        def plugin = new LibprunusCorePlugin()
+
+        when:
+        plugin.apply(project)
+        project.evaluate()
+
+        then: "pitest is applied with the convention threshold and no-mutations leniency"
+        project.plugins.hasPlugin(PitestPlugin)
+        def pitest = project.extensions.getByType(PitestPluginExtension)
+        pitest.mutationThreshold.get() == 70
+        !pitest.failWhenNoMutations.get()
+
+        and: "check depends on the pitest task, which is sequenced after test"
+        def pitestTask = project.tasks.getByName("pitest")
+        project.tasks.getByName("check").taskDependencies
+                .getDependencies(project.tasks.getByName("check")).contains(pitestTask)
+        pitestTask.mustRunAfter.getDependencies(pitestTask).contains(project.tasks.getByName("test"))
+    }
+
+    def "javaBuild skips pitest entirely when pitestEnabled is false"() {
+        given:
+        def project = ProjectBuilder.builder().withName("libprunus-core-plugin-pitest-off").build()
+        def plugin = new LibprunusCorePlugin()
+
+        when:
+        plugin.apply(project)
+        ((PrunusExtension) project.extensions.getByName("prunus")).javaBuild.pitestEnabled.set(false)
+        project.evaluate()
+
+        then: "no pitest plugin, no pitest task"
+        !project.plugins.hasPlugin(PitestPlugin)
+        project.tasks.findByName("pitest") == null
+
+        and: "check is not gated by pitest"
+        project.tasks.getByName("check").taskDependencies
+                .getDependencies(project.tasks.getByName("check")).every { it.name != "pitest" }
     }
 
     def "apply wires aotConfigurer side effects (byteBuddy plus three aot tasks) when aot is enabled"() {

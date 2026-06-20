@@ -16,6 +16,7 @@ import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
+import org.jspecify.annotations.Nullable;
 import org.libprunus.core.plugin.aot.task.AbstractAotActionTask;
 import org.libprunus.core.plugin.aot.task.GenerateAotBindingTask;
 import org.libprunus.core.plugin.aot.task.GenerateLibraryWhitelistTask;
@@ -336,7 +337,7 @@ public final class AotConfigurer {
         return getJavaExtension().getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME);
     }
 
-    private static String resolveCoordinate(Object value) {
+    private static @Nullable String resolveCoordinate(Object value) {
         if (value instanceof Provider<?> provider) {
             value = provider.getOrNull();
         }

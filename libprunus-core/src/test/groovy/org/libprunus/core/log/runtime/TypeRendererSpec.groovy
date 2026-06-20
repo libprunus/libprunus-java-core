@@ -30,7 +30,7 @@ class TypeRendererSpec extends Specification {
         render.parameterTypes == [StringBuilderWithContext, Object] as Class[]
 
         and: "zero fields so concrete lambdas remain capture-free"
-        TypeRenderer.getDeclaredFields().length == 0
+        TypeRenderer.getDeclaredFields().findAll { !it.synthetic }.isEmpty()
     }
 
     def "TypeRenderer accepts a lambda assigned to NonSealedTypeRenderer and routes its render call to the supplied StringBuilderWithContext"() {

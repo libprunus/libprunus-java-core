@@ -43,13 +43,13 @@ class CoreRuntimePropertiesSpec extends Specification {
         properties.getLog().is(replacement)
     }
 
-    def "binds libprunus.log.enabled from a property source via constructor binding"() {
+    def "binds prunus.log.enabled from a property source via constructor binding"() {
         given: "a property source carrying the nested key"
-        def source = new MapConfigurationPropertySource(["libprunus.log.enabled": value])
+        def source = new MapConfigurationPropertySource(["prunus.log.enabled": value])
         def binder = new Binder([source] as ConfigurationPropertySource[])
 
         when: "the binder materializes CoreRuntimeProperties"
-        def properties = binder.bindOrCreate("libprunus", CoreRuntimeProperties)
+        def properties = binder.bindOrCreate("prunus", CoreRuntimeProperties)
 
         then: "the nested LogRuntimeConfig record is rebuilt with the bound value"
         properties.log.enabled() == expected
@@ -60,13 +60,13 @@ class CoreRuntimePropertiesSpec extends Specification {
         "true"  || true
     }
 
-    def "leaves the default log alone when no libprunus.log.* keys are present"() {
+    def "leaves the default log alone when no prunus.log.* keys are present"() {
         given: "a property source carrying unrelated keys only"
         def source = new MapConfigurationPropertySource(["other.thing": "x"])
         def binder = new Binder([source] as ConfigurationPropertySource[])
 
         when: "the binder materializes CoreRuntimeProperties"
-        def properties = binder.bindOrCreate("libprunus", CoreRuntimeProperties)
+        def properties = binder.bindOrCreate("prunus", CoreRuntimeProperties)
 
         then: "the constructor default (enabled=true) is preserved"
         properties.log.enabled()

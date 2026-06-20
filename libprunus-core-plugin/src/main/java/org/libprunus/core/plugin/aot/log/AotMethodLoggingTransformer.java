@@ -17,6 +17,7 @@ import net.bytebuddy.jar.asm.ClassWriter;
 import net.bytebuddy.jar.asm.MethodVisitor;
 import net.bytebuddy.jar.asm.Opcodes;
 import net.bytebuddy.pool.TypePool;
+import org.jspecify.annotations.Nullable;
 import org.libprunus.core.log.runtime.LogLevel;
 
 final class AotMethodLoggingTransformer extends AsmVisitorWrapper.AbstractBase {
@@ -86,6 +87,8 @@ final class AotMethodLoggingTransformer extends AsmVisitorWrapper.AbstractBase {
         private final Set<String> overloadedNames;
         private final Map<String, MethodDescription> methodLookup;
         private final List<SyntheticMethodRequest> syntheticRequests = new ArrayList<>();
+
+        @SuppressWarnings("NullAway") // assigned in ASM visit() before any visitMethod/visitEnd use
         private String classInternalName;
 
         private AotMethodLoggingClassVisitor(
@@ -116,7 +119,7 @@ final class AotMethodLoggingTransformer extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        public MethodVisitor visitMethod(
+        public @Nullable MethodVisitor visitMethod(
                 int access, String name, String descriptor, String signature, String[] exceptions) {
             if (WeavingInternalNames.isSyntheticMethodName(name)) {
                 return null;
@@ -127,7 +130,7 @@ final class AotMethodLoggingTransformer extends AsmVisitorWrapper.AbstractBase {
                 return delegate;
             }
             MethodNode methodNode = routeGraph.findDeclaredMethodNode(instrumentedType, name, descriptor);
-            if (!routeGraph.shouldEmitEnterExitFor(methodNode)) {
+            if (methodNode == null || !routeGraph.shouldEmitEnterExitFor(methodNode)) {
                 return delegate;
             }
             MethodLogContext context = new MethodLogContext(

@@ -3,6 +3,8 @@ plugins {
 }
 
 dependencies {
+    implementation(libs.errorprone.gradle.plugin)
+    implementation(libs.pitest.gradle.plugin)
     implementation(libs.sonarqube.plugin)
     implementation(libs.spotless.plugin)
 }

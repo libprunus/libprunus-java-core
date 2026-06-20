@@ -19,7 +19,7 @@ class AotByteBuddyDispatcherClasspathIntegrationSpec extends Specification {
         second.mkdirs()
 
         when:
-        def dispatcher = new AotByteBuddyDispatcher(null, classesDir, [first, first, classesDir, second, first] as File[])
+        def dispatcher = new AotByteBuddyDispatcher("", classesDir, [first, first, classesDir, second, first] as File[])
 
         then:
         dispatcher.@plugins == []

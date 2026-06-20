@@ -2,10 +2,18 @@ package org.libprunus.core.plugin.buildlogic;
 
 import com.diffplug.gradle.spotless.SpotlessExtension;
 import com.diffplug.gradle.spotless.SpotlessPlugin;
+import info.solidsoft.gradle.pitest.PitestPlugin;
+import info.solidsoft.gradle.pitest.PitestPluginExtension;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Properties;
+import net.ltgt.gradle.errorprone.ErrorProneOptions;
+import net.ltgt.gradle.errorprone.ErrorPronePlugin;
+import org.gradle.api.GradleException;
 import org.gradle.api.Project;
+import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.provider.Provider;
@@ -31,6 +39,8 @@ public final class JavaBuildLogic {
     private static final List<TestLogEvent> TEST_LOG_EVENTS =
             List.of(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED);
 
+    private static final Properties TOOL_VERSIONS = loadToolVersions();
+
     private final Project project;
     private final JavaBuildExtension javaBuild;
 
@@ -45,6 +55,8 @@ public final class JavaBuildLogic {
         configureJacoco();
         configureTest();
         configureSpotless();
+        configureErrorProne();
+        configurePitest();
     }
 
     private void applyNecessaryPlugins() {
@@ -53,6 +65,7 @@ public final class JavaBuildLogic {
         pluginManager.apply(JacocoPlugin.class);
         pluginManager.apply(JavaLibraryPlugin.class);
         pluginManager.apply(SpotlessPlugin.class);
+        pluginManager.apply(ErrorPronePlugin.class);
     }
 
     private void configureJava() {
@@ -131,6 +144,7 @@ public final class JavaBuildLogic {
     private void configureTest() {
         declareTestDependencies();
         configureTestTasks();
+        configureSpock();
     }
 
     private void declareTestDependencies() {
@@ -148,6 +162,19 @@ public final class JavaBuildLogic {
                 testLogging.setExceptionFormat(TestExceptionFormat.FULL);
             });
             test.finalizedBy(project.getTasks().withType(JacocoReport.class));
+        });
+    }
+
+    private void configureSpock() {
+        project.afterEvaluate(evaluated -> {
+            if (!javaBuild.getSpockEnabled().get()) {
+                return;
+            }
+            project.getPluginManager().apply("groovy");
+            var dependencies = project.getDependencies();
+            dependencies.add("testImplementation", "org.apache.groovy:groovy:" + TOOL_VERSIONS.getProperty("groovy"));
+            dependencies.add(
+                    "testImplementation", "org.spockframework:spock-core:" + TOOL_VERSIONS.getProperty("spock"));
         });
     }
 
@@ -172,5 +199,59 @@ public final class JavaBuildLogic {
             kotlinGradleExtension.trimTrailingWhitespace();
             kotlinGradleExtension.endWithNewline();
         });
+    }
+
+    private void configureErrorProne() {
+        var dependencies = project.getDependencies();
+        dependencies.add("api", "org.jspecify:jspecify:" + TOOL_VERSIONS.getProperty("jspecify"));
+        dependencies.add(
+                "errorprone", "com.google.errorprone:error_prone_core:" + TOOL_VERSIONS.getProperty("errorprone-core"));
+        dependencies.add("errorprone", "com.uber.nullaway:nullaway:" + TOOL_VERSIONS.getProperty("nullaway"));
+
+        project.getTasks().withType(JavaCompile.class).configureEach(task -> {
+            var errorProne =
+                    ((ExtensionAware) task.getOptions()).getExtensions().getByType(ErrorProneOptions.class);
+            errorProne.getDisableAllChecks().set(true);
+            errorProne.error("NullAway");
+            errorProne.option("NullAway:OnlyNullMarked", "true");
+            errorProne.option("NullAway:JSpecifyMode", "true");
+            if (!task.getName().endsWith("TestJava")) {
+                errorProne.error("RequireExplicitNullMarking");
+            }
+        });
+    }
+
+    private void configurePitest() {
+        project.afterEvaluate(evaluated -> {
+            if (!javaBuild.getPitestEnabled().get()) {
+                return;
+            }
+            project.getPluginManager().apply(PitestPlugin.class);
+            var pitest = project.getExtensions().getByType(PitestPluginExtension.class);
+            pitest.getPitestVersion().set(TOOL_VERSIONS.getProperty("pitest"));
+            pitest.getJunit5PluginVersion().set(TOOL_VERSIONS.getProperty("pitest-junit5"));
+            pitest.getMutationThreshold().set(javaBuild.getMutationThreshold());
+            pitest.getOutputFormats().set(List.of("XML", "HTML"));
+            pitest.getFailWhenNoMutations().set(false);
+            pitest.getJvmArgs().add("--add-opens=java.base/java.lang=ALL-UNNAMED");
+
+            var tasks = project.getTasks();
+            var pitestTask = tasks.named(PitestPlugin.PITEST_TASK_NAME);
+            pitestTask.configure(task -> task.mustRunAfter(tasks.withType(Test.class)));
+            tasks.named("check").configure(task -> task.dependsOn(pitestTask));
+        });
+    }
+
+    private static Properties loadToolVersions() {
+        var versions = new Properties();
+        try (var stream = JavaBuildLogic.class.getResourceAsStream("/libprunus-tool-versions.properties")) {
+            if (stream == null) {
+                throw new GradleException("libprunus-tool-versions.properties is missing from the plugin classpath");
+            }
+            versions.load(stream);
+        } catch (IOException e) {
+            throw new GradleException("Failed to read libprunus-tool-versions.properties", e);
+        }
+        return versions;
     }
 }

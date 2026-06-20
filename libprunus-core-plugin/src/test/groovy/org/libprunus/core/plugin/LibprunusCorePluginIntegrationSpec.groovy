@@ -235,6 +235,44 @@ class LibprunusCorePluginIntegrationSpec extends Specification {
         result.output.contains(':resolveLogConfigProviderConflict')
     }
 
+    def "build fails when a production package lacks @NullMarked (RequireExplicitNullMarking)"() {
+        given:
+        def repoRoot = findRepoRoot()
+        def escapedRepoRoot = repoRoot.absolutePath.replace('\\', '\\\\')
+        new File(testProjectDir, 'settings.gradle').text = """
+rootProject.name = 'require-null-marking'
+includeBuild('${escapedRepoRoot}')
+""".stripIndent()
+        new File(testProjectDir, 'build.gradle').text = '''
+plugins {
+    id 'org.libprunus.libprunus-core-plugin'
+}
+
+repositories {
+    mavenCentral()
+}
+'''
+        def sourceDir = new File(testProjectDir, 'src/main/java/sample')
+        sourceDir.mkdirs()
+        new File(sourceDir, 'Unmarked.java').text = '''
+package sample;
+
+public class Unmarked {}
+'''
+
+        when:
+        def result = GradleRunner.create()
+                .withProjectDir(testProjectDir)
+                .withPluginClasspath()
+                .withArguments('compileJava')
+                .buildAndFail()
+
+        then:
+        !result.output.contains('BUILD SUCCESSFUL')
+        result.output.contains('RequireExplicitNullMarking')
+        result.output.contains('Unmarked.java')
+    }
+
     private static void writeSampleProject(File projectDir, File repoRoot) {
         writeSampleProject(projectDir, repoRoot, [])
     }
@@ -252,6 +290,10 @@ plugins {
 
 repositories {
     mavenCentral()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone.disable('RequireExplicitNullMarking')
 }
 '''
         def sourceDir = new File(projectDir, 'src/main/java/sample')
@@ -309,6 +351,10 @@ prunus {
 
 repositories {
     mavenCentral()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone.disable('RequireExplicitNullMarking')
 }
 
 dependencies {
@@ -589,6 +635,10 @@ prunus {
 
 repositories {
     mavenCentral()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone.disable('RequireExplicitNullMarking')
 }
 
 dependencies {

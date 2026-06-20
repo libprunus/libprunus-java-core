@@ -5,6 +5,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 import org.libprunus.core.plugin.aot.BindingIdSanitizer;
 import org.libprunus.core.plugin.aot.PrunusPluginConstants;
 
@@ -83,7 +84,7 @@ final class BindingClassSelector {
                 + PrunusPluginConstants.GENERATED_AOT_BINDING_IMPL_SIMPLE_NAME;
     }
 
-    public static SelectionResult select(String explicitBindingClass, String defaultBindingClass) {
+    public static SelectionResult select(@Nullable String explicitBindingClass, String defaultBindingClass) {
         Objects.requireNonNull(defaultBindingClass, "defaultBindingClass");
         if (explicitBindingClass != null && !explicitBindingClass.isBlank()) {
             String stripped = explicitBindingClass.strip();

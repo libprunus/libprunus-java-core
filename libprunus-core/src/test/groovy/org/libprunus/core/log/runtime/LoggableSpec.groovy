@@ -60,7 +60,7 @@ class LoggableSpec extends Specification {
 
     def "interface declares no fields so AOT-generated implementations inherit only the SAM contract"() {
         expect:
-        Loggable.declaredFields.length == 0
+        Loggable.declaredFields.findAll { !it.synthetic }.isEmpty()
     }
 
     def "interface declares no super-interfaces so the AOT-generated SAM hierarchy stays flat"() {

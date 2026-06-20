@@ -16,6 +16,7 @@ import net.bytebuddy.jar.asm.MethodVisitor;
 import net.bytebuddy.jar.asm.Opcodes;
 import net.bytebuddy.jar.asm.Type;
 import net.bytebuddy.pool.TypePool;
+import org.jspecify.annotations.Nullable;
 import org.libprunus.core.plugin.aot.JvmDescriptor;
 
 final class AotPojoTransformer extends AsmVisitorWrapper.AbstractBase {
@@ -46,7 +47,7 @@ final class AotPojoTransformer extends AsmVisitorWrapper.AbstractBase {
         List<FieldRenderSlot> slots = routeGraph.toStringFieldChain(typeDescription);
         return new ClassVisitor(Opcodes.ASM9, classVisitor) {
             @Override
-            public MethodVisitor visitMethod(
+            public @Nullable MethodVisitor visitMethod(
                     int access, String name, String descriptor, String signature, String[] exceptions) {
                 if (("toString".equals(name) && "()Ljava/lang/String;".equals(descriptor))
                         || (WeavingInternalNames.AOT_RENDER_METHOD.equals(name)

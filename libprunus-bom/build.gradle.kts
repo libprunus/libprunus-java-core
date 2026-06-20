@@ -3,13 +3,7 @@ plugins {
     `maven-publish`
 }
 
-javaPlatform {
-    allowDependencies()
-}
-
 dependencies {
-    api(platform(libs.spring.boot.bom))
-
     constraints {
         api(project(":libprunus-core"))
         api(project(":libprunus-spring"))

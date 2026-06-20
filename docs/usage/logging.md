@@ -273,7 +273,7 @@ ConfigurationRepository repo = new ConfigurationRepository(new CoreRuntimeConfig
 repo.refresh(new CoreRuntimeConfig(new LogRuntimeConfig(false)));
 ```
 
-**Spring Boot.** `libprunus-spring` autoconfigures the repository wired to `CoreRuntimeProperties`. Set the master switch via the `libprunus.log.enabled` application property (default `true`); refresh through Spring's normal configuration channels.
+**Spring Boot.** `libprunus-spring` autoconfigures the repository wired to `CoreRuntimeProperties`. Set the master switch via the `prunus.log.enabled` application property (default `true`); refresh through Spring's normal configuration channels.
 
 **Custom path.** Applications with their own config plumbing call `LogRuntime.linkToDataPlane(myAtomicReference)` directly and publish updates via `myAtomicReference.set(...)`. When nothing is linked, the runtime falls back to its built-in default (enabled).
 

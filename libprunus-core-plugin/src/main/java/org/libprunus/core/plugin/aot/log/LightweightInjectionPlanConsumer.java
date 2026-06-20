@@ -4,6 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.jar.asm.Label;
 import net.bytebuddy.jar.asm.Type;
+import org.jspecify.annotations.Nullable;
 import org.libprunus.core.log.runtime.LogLevel;
 
 final class LightweightInjectionPlanConsumer {
@@ -88,7 +89,7 @@ final class LightweightInjectionPlanConsumer {
             int returnValueSlot,
             int loggerSlot,
             int shiftAmount,
-            Label exitEpilogueLabel,
+            @Nullable Label exitEpilogueLabel,
             String syntheticEnterName,
             String syntheticEnterDescriptor,
             String syntheticExitName,

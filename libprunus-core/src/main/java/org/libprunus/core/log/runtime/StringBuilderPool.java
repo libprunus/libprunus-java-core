@@ -1,5 +1,7 @@
 package org.libprunus.core.log.runtime;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Thread-local-pooled supplier of {@link StringBuilderWithContext}. Each platform thread owns its
  * own fixed-capacity cursor stack; virtual threads bypass pooling entirely.
@@ -45,11 +47,12 @@ public final class StringBuilderPool {
 
     private static final class PoolState {
         int cursor = 0;
-        final StringBuilderWithContext[] items = new StringBuilderWithContext[MAX_POOL_DEPTH];
+        final @Nullable StringBuilderWithContext[] items = new StringBuilderWithContext[MAX_POOL_DEPTH];
     }
 
     private static final ThreadLocal<PoolState> POOL = ThreadLocal.withInitial(PoolState::new);
 
+    @SuppressWarnings("NullAway") // pool slots below cursor are non-null by the cursor invariant
     public static StringBuilderWithContext acquire() {
         int maxMessageLength = LogRuntime.getGlobalMaxMessageLength();
         if (Thread.currentThread().isVirtual()) {
@@ -76,7 +79,8 @@ public final class StringBuilderPool {
         return item;
     }
 
-    public static void release(StringBuilderWithContext item) {
+    @SuppressWarnings("NullAway") // pool slots below cursor are non-null by the cursor invariant
+    public static void release(@Nullable StringBuilderWithContext item) {
         if (Thread.currentThread().isVirtual() || item == null) {
             return;
         }

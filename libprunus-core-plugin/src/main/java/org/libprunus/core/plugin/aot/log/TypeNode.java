@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.jspecify.annotations.Nullable;
 
 final class TypeNode {
 
@@ -47,6 +48,7 @@ final class TypeNode {
         this.toStringFieldChain = List.copyOf(toStringFieldChain);
     }
 
+    @Nullable
     MethodNode findDeclaredMethod(String name, String descriptor) {
         return declaredMethodIndex.get(name + descriptor);
     }

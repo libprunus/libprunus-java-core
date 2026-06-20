@@ -1,1 +1,2 @@
 org.libprunus.spring.config.CoreRuntimeConfigAutoConfiguration
+org.libprunus.spring.config.json.SafeJacksonAutoConfiguration

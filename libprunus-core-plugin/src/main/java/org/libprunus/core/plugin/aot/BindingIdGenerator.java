@@ -4,10 +4,16 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 public final class BindingIdGenerator {
 
-    public String generate(String group, String artifact, String version, String modulePath, String variant) {
+    public String generate(
+            @Nullable String group,
+            @Nullable String artifact,
+            @Nullable String version,
+            String modulePath,
+            String variant) {
         Objects.requireNonNull(modulePath, "modulePath");
         Objects.requireNonNull(variant, "variant");
         if (modulePath.isBlank()) {
@@ -31,7 +37,7 @@ public final class BindingIdGenerator {
         return "b" + HexFormat.of().formatHex(digest.digest(), 0, ShortStableHash.HASH_BYTES);
     }
 
-    private static void updateDigest(MessageDigest digest, String value) {
+    private static void updateDigest(MessageDigest digest, @Nullable String value) {
         String text = (value == null) ? "" : value.strip();
         if (text.isEmpty()) {
             text = "unspecified";

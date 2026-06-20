@@ -14,6 +14,7 @@ public final class ConfigurationRepository {
         LogRuntime.linkToDataPlane(this.currentSnapshot);
     }
 
+    @SuppressWarnings("NullAway") // contents non-null by construction; AtomicReference.get() modeled @Nullable
     public CoreRuntimeConfig getGlobalSnapshot() {
         return currentSnapshot.get();
     }

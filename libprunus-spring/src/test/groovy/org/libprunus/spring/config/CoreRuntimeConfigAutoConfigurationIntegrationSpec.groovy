@@ -48,13 +48,13 @@ class CoreRuntimeConfigAutoConfigurationIntegrationSpec extends Specification {
         repository.getGlobalSnapshot().is(runtimeConfig)
     }
 
-    def "binds libprunus.log.enabled application property end-to-end"() {
+    def "binds prunus.log.enabled application property end-to-end"() {
         given: "a placeholder for the materialized runtime config"
         CoreRuntimeConfig runtimeConfig
 
-        when: "the context starts with libprunus.log.enabled=false"
+        when: "the context starts with prunus.log.enabled=false"
         contextRunner
-                .withPropertyValues("libprunus.log.enabled=false")
+                .withPropertyValues("prunus.log.enabled=false")
                 .run { context ->
                     runtimeConfig = context.getBean(CoreRuntimeConfig)
                 }

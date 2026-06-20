@@ -5,8 +5,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
+import info.solidsoft.gradle.pitest.PitestPlugin;
+import info.solidsoft.gradle.pitest.PitestPluginExtension;
+import net.ltgt.gradle.errorprone.ErrorProneOptions;
+import net.ltgt.gradle.errorprone.ErrorPronePlugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.VersionCatalog;
+import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.plugins.GroovyPlugin;
 import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
@@ -31,6 +36,7 @@ final class JavaBuildLogic {
     private static final int JAVA_VERSION = 25;
     private static final String UTF_8 = StandardCharsets.UTF_8.name();
     private static final double COVERAGE_THRESHOLD = 0.9;
+    private static final int MUTATION_THRESHOLD = 70;
 
     private static final List<String> COMPILER_ARGS =
             List.of("-parameters", "-Xlint:all,-serial,-processing,-classfile,-this-escape", "-Werror");
@@ -56,6 +62,8 @@ final class JavaBuildLogic {
         configureJacoco();
         configureTest();
         configureSpotless();
+        configureErrorProne();
+        configurePitest();
 
         configureInternalBom();
     }
@@ -199,6 +207,50 @@ final class JavaBuildLogic {
             kotlinGradleExtension.trimTrailingWhitespace();
             kotlinGradleExtension.endWithNewline();
         });
+    }
+
+    private void configureErrorProne() {
+        if (libs == null) {
+            return;
+        }
+        project.getPluginManager().apply(ErrorPronePlugin.class);
+        var dependencies = project.getDependencies();
+        libs.findLibrary("jspecify").ifPresent(dep -> dependencies.add("api", dep));
+        libs.findLibrary("errorprone-core").ifPresent(dep -> dependencies.add("errorprone", dep));
+        libs.findLibrary("nullaway").ifPresent(dep -> dependencies.add("errorprone", dep));
+
+        project.getTasks().withType(JavaCompile.class).configureEach(task -> {
+            var errorProne =
+                    ((ExtensionAware) task.getOptions()).getExtensions().getByType(ErrorProneOptions.class);
+            errorProne.getDisableAllChecks().set(true);
+            errorProne.error("NullAway");
+            errorProne.option("NullAway:OnlyNullMarked", "true");
+            errorProne.option("NullAway:JSpecifyMode", "true");
+            if (!task.getName().endsWith("TestJava")) {
+                errorProne.error("RequireExplicitNullMarking");
+            }
+        });
+    }
+
+    private void configurePitest() {
+        if (libs == null) {
+            return;
+        }
+        project.getPluginManager().apply(PitestPlugin.class);
+        var pitest = project.getExtensions().getByType(PitestPluginExtension.class);
+        libs.findVersion("pitest-core")
+                .ifPresent(version -> pitest.getPitestVersion().set(version.getRequiredVersion()));
+        libs.findVersion("pitest-junit5")
+                .ifPresent(version -> pitest.getJunit5PluginVersion().set(version.getRequiredVersion()));
+        pitest.getMutationThreshold().set(MUTATION_THRESHOLD);
+        pitest.getOutputFormats().set(List.of("XML", "HTML"));
+        pitest.getFailWhenNoMutations().set(false);
+        pitest.getJvmArgs().add("--add-opens=java.base/java.lang=ALL-UNNAMED");
+
+        var tasks = project.getTasks();
+        var pitestTask = tasks.named(PitestPlugin.PITEST_TASK_NAME);
+        pitestTask.configure(task -> task.mustRunAfter(tasks.withType(Test.class)));
+        tasks.named("check").configure(task -> task.dependsOn(pitestTask));
     }
 
     private void configureInternalBom() {

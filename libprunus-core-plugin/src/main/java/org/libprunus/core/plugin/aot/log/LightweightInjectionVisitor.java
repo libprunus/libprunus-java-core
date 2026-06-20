@@ -11,6 +11,7 @@ import net.bytebuddy.jar.asm.Opcodes;
 import net.bytebuddy.jar.asm.Type;
 import net.bytebuddy.jar.asm.TypePath;
 import net.bytebuddy.utility.visitor.LocalVariableAwareMethodVisitor;
+import org.jspecify.annotations.Nullable;
 import org.libprunus.core.log.runtime.LogLevel;
 
 final class LightweightInjectionVisitor extends LocalVariableAwareMethodVisitor {
@@ -31,7 +32,7 @@ final class LightweightInjectionVisitor extends LocalVariableAwareMethodVisitor 
     private final int returnValueSlot;
     private final int loggerSlot;
     private final int shiftAmount;
-    private final Label exitEpilogueLabel;
+    private final @Nullable Label exitEpilogueLabel;
     private final String syntheticEnterName;
     private final String syntheticEnterDescriptor;
     private final String syntheticExitName;

@@ -2,6 +2,7 @@ package org.libprunus.core.plugin.aot.log;
 
 import java.util.List;
 import net.bytebuddy.description.method.MethodDescription;
+import org.jspecify.annotations.Nullable;
 import org.libprunus.core.log.runtime.LogLevel;
 
 final class ClassPlanAssembler {
@@ -49,8 +50,8 @@ final class ClassPlanAssembler {
 
     record MethodPlan(
             MethodKey methodKey,
-            long[] ignoredParamMask,
-            long[] maskedParamMask,
+            long @Nullable [] ignoredParamMask,
+            long @Nullable [] maskedParamMask,
             boolean returnMasked,
             boolean returnIgnored,
             LogLevel effectiveEnterLevel,
@@ -60,11 +61,11 @@ final class ClassPlanAssembler {
             maskedParamMask = maskedParamMask != null ? maskedParamMask.clone() : null;
         }
 
-        public long[] ignoredParamMask() {
+        public long @Nullable [] ignoredParamMask() {
             return ignoredParamMask != null ? ignoredParamMask.clone() : null;
         }
 
-        public long[] maskedParamMask() {
+        public long @Nullable [] maskedParamMask() {
             return maskedParamMask != null ? maskedParamMask.clone() : null;
         }
 

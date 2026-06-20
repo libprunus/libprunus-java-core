@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import org.jspecify.annotations.Nullable;
 
 final class RegistryRouteGraph {
 
@@ -86,7 +87,7 @@ final class RegistryRouteGraph {
         return nodeOf(type).toStringFieldChain();
     }
 
-    boolean shouldEmitEnterExitFor(MethodNode methodNode) {
+    boolean shouldEmitEnterExitFor(@Nullable MethodNode methodNode) {
         if (methodNode == null) {
             return false;
         }
@@ -96,6 +97,7 @@ final class RegistryRouteGraph {
         return !isWholeMethodSkipApplicable(methodNode);
     }
 
+    @Nullable
     MethodNode findDeclaredMethodNode(TypeDescription declaringType, String name, String descriptor) {
         return nodeOf(declaringType).findDeclaredMethod(name, descriptor);
     }
@@ -114,7 +116,7 @@ final class RegistryRouteGraph {
         return node;
     }
 
-    private MethodNode findMethodNode(TypeDescription declaringType, MethodDescription method) {
+    private @Nullable MethodNode findMethodNode(TypeDescription declaringType, MethodDescription method) {
         return nodeOf(declaringType).findDeclaredMethod(method.getInternalName(), method.getDescriptor());
     }
 
