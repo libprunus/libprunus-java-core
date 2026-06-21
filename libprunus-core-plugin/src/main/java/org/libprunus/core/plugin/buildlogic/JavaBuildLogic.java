@@ -32,6 +32,11 @@ import org.gradle.testing.jacoco.tasks.rules.JacocoViolationRule;
 public final class JavaBuildLogic {
 
     private static final String UTF_8 = StandardCharsets.UTF_8.name();
+    private static final String API = "api";
+    private static final String ERRORPRONE = "errorprone";
+    private static final String TEST_IMPLEMENTATION = "testImplementation";
+    private static final String TEST_RUNTIME_ONLY = "testRuntimeOnly";
+    private static final String CHECK_TASK = "check";
 
     private static final List<String> COMPILER_ARGS =
             List.of("-parameters", "-Xlint:all,-serial,-processing,-classfile,-this-escape", "-Werror");
@@ -128,7 +133,7 @@ public final class JavaBuildLogic {
 
     private void bindJacocoVerificationToCheck() {
         var tasks = project.getTasks();
-        tasks.named("check").configure(task -> task.dependsOn(tasks.withType(JacocoCoverageVerification.class)));
+        tasks.named(CHECK_TASK).configure(task -> task.dependsOn(tasks.withType(JacocoCoverageVerification.class)));
     }
 
     private void addCoverageLimit(JacocoViolationRule rule, String counter, double threshold) {
@@ -149,8 +154,8 @@ public final class JavaBuildLogic {
 
     private void declareTestDependencies() {
         var dependencies = project.getDependencies();
-        dependencies.add("testImplementation", "org.junit.jupiter:junit-jupiter");
-        dependencies.add("testRuntimeOnly", "org.junit.platform:junit-platform-launcher");
+        dependencies.add(TEST_IMPLEMENTATION, "org.junit.jupiter:junit-jupiter");
+        dependencies.add(TEST_RUNTIME_ONLY, "org.junit.platform:junit-platform-launcher");
     }
 
     private void configureTestTasks() {
@@ -172,9 +177,9 @@ public final class JavaBuildLogic {
             }
             project.getPluginManager().apply("groovy");
             var dependencies = project.getDependencies();
-            dependencies.add("testImplementation", "org.apache.groovy:groovy:" + TOOL_VERSIONS.getProperty("groovy"));
+            dependencies.add(TEST_IMPLEMENTATION, "org.apache.groovy:groovy:" + TOOL_VERSIONS.getProperty("groovy"));
             dependencies.add(
-                    "testImplementation", "org.spockframework:spock-core:" + TOOL_VERSIONS.getProperty("spock"));
+                    TEST_IMPLEMENTATION, "org.spockframework:spock-core:" + TOOL_VERSIONS.getProperty("spock"));
         });
     }
 
@@ -203,10 +208,10 @@ public final class JavaBuildLogic {
 
     private void configureErrorProne() {
         var dependencies = project.getDependencies();
-        dependencies.add("api", "org.jspecify:jspecify:" + TOOL_VERSIONS.getProperty("jspecify"));
+        dependencies.add(API, "org.jspecify:jspecify:" + TOOL_VERSIONS.getProperty("jspecify"));
         dependencies.add(
-                "errorprone", "com.google.errorprone:error_prone_core:" + TOOL_VERSIONS.getProperty("errorprone-core"));
-        dependencies.add("errorprone", "com.uber.nullaway:nullaway:" + TOOL_VERSIONS.getProperty("nullaway"));
+                ERRORPRONE, "com.google.errorprone:error_prone_core:" + TOOL_VERSIONS.getProperty("errorprone-core"));
+        dependencies.add(ERRORPRONE, "com.uber.nullaway:nullaway:" + TOOL_VERSIONS.getProperty("nullaway"));
 
         project.getTasks().withType(JavaCompile.class).configureEach(task -> {
             var errorProne =
@@ -238,7 +243,7 @@ public final class JavaBuildLogic {
             var tasks = project.getTasks();
             var pitestTask = tasks.named(PitestPlugin.PITEST_TASK_NAME);
             pitestTask.configure(task -> task.mustRunAfter(tasks.withType(Test.class)));
-            tasks.named("check").configure(task -> task.dependsOn(pitestTask));
+            tasks.named(CHECK_TASK).configure(task -> task.dependsOn(pitestTask));
         });
     }
 

@@ -9,12 +9,17 @@ import info.solidsoft.gradle.pitest.PitestPlugin;
 import info.solidsoft.gradle.pitest.PitestPluginExtension;
 import net.ltgt.gradle.errorprone.ErrorProneOptions;
 import net.ltgt.gradle.errorprone.ErrorPronePlugin;
+import org.cyclonedx.Version;
+import org.cyclonedx.gradle.CyclonedxDirectTask;
+import org.cyclonedx.gradle.CyclonedxPlugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.VersionCatalog;
+import org.gradle.api.file.RegularFile;
 import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.plugins.GroovyPlugin;
 import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
 import org.gradle.api.tasks.testing.Test;
@@ -30,6 +35,10 @@ import org.sonarqube.gradle.SonarQubePlugin;
 
 import com.diffplug.gradle.spotless.SpotlessExtension;
 import com.diffplug.gradle.spotless.SpotlessPlugin;
+import com.github.jk1.license.LicenseReportExtension;
+import com.github.jk1.license.LicenseReportPlugin;
+import com.github.jk1.license.filter.DependencyFilter;
+import com.github.jk1.license.filter.LicenseBundleNormalizer;
 
 final class JavaBuildLogic {
 
@@ -37,6 +46,16 @@ final class JavaBuildLogic {
     private static final String UTF_8 = StandardCharsets.UTF_8.name();
     private static final double COVERAGE_THRESHOLD = 0.9;
     private static final int MUTATION_THRESHOLD = 70;
+    private static final String API = "api";
+    private static final String ERRORPRONE = "errorprone";
+    private static final String TEST_IMPLEMENTATION = "testImplementation";
+    private static final String TEST_RUNTIME_ONLY = "testRuntimeOnly";
+    private static final String RUNTIME_CLASSPATH = "runtimeClasspath";
+    private static final String CHECK_TASK = "check";
+    private static final String CYCLONEDX_DIRECT_BOM_TASK = "cyclonedxDirectBom";
+    private static final String CHECK_LICENSE_TASK = "checkLicense";
+    private static final String SBOM_REPORT_PATH = "reports/sbom/bom.json";
+    private static final String ALLOWED_LICENSES_FILE = "config/allowed-licenses.json";
 
     private static final List<String> COMPILER_ARGS =
             List.of("-parameters", "-Xlint:all,-serial,-processing,-classfile,-this-escape", "-Werror");
@@ -66,6 +85,7 @@ final class JavaBuildLogic {
         configurePitest();
 
         configureInternalBom();
+        configureSbomAndLicenseGate();
     }
 
     private void applyNecessaryPlugins() {
@@ -75,6 +95,8 @@ final class JavaBuildLogic {
         pluginManager.apply(JacocoPlugin.class);
         pluginManager.apply(JavaLibraryPlugin.class);
         pluginManager.apply(SpotlessPlugin.class);
+        pluginManager.apply(CyclonedxPlugin.class);
+        pluginManager.apply(LicenseReportPlugin.class);
 
         project.getRootProject().getPluginManager().apply(SonarQubePlugin.class);
     }
@@ -134,7 +156,7 @@ final class JavaBuildLogic {
 
     private void bindJacocoVerificationToCheck() {
         var tasks = project.getTasks();
-        tasks.named("check").configure(task -> task.dependsOn(tasks.withType(JacocoCoverageVerification.class)));
+        tasks.named(CHECK_TASK).configure(task -> task.dependsOn(tasks.withType(JacocoCoverageVerification.class)));
     }
 
     private void addCoverageLimit(JacocoViolationRule rule, String counter, double threshold) {
@@ -156,11 +178,11 @@ final class JavaBuildLogic {
         var dependencies = project.getDependencies();
 
         if (libs != null) {
-            libs.findLibrary("groovy-core").ifPresent(dep -> dependencies.add("testImplementation", dep));
-            libs.findLibrary("spock-core").ifPresent(dep -> dependencies.add("testImplementation", dep));
+            libs.findLibrary("groovy-core").ifPresent(dep -> dependencies.add(TEST_IMPLEMENTATION, dep));
+            libs.findLibrary("spock-core").ifPresent(dep -> dependencies.add(TEST_IMPLEMENTATION, dep));
         }
-        dependencies.add("testImplementation", "org.junit.jupiter:junit-jupiter");
-        dependencies.add("testRuntimeOnly", "org.junit.platform:junit-platform-launcher");
+        dependencies.add(TEST_IMPLEMENTATION, "org.junit.jupiter:junit-jupiter");
+        dependencies.add(TEST_RUNTIME_ONLY, "org.junit.platform:junit-platform-launcher");
     }
 
     private void configureTestTasks() {
@@ -215,9 +237,9 @@ final class JavaBuildLogic {
         }
         project.getPluginManager().apply(ErrorPronePlugin.class);
         var dependencies = project.getDependencies();
-        libs.findLibrary("jspecify").ifPresent(dep -> dependencies.add("api", dep));
-        libs.findLibrary("errorprone-core").ifPresent(dep -> dependencies.add("errorprone", dep));
-        libs.findLibrary("nullaway").ifPresent(dep -> dependencies.add("errorprone", dep));
+        libs.findLibrary("jspecify").ifPresent(dep -> dependencies.add(API, dep));
+        libs.findLibrary("errorprone-core").ifPresent(dep -> dependencies.add(ERRORPRONE, dep));
+        libs.findLibrary("nullaway").ifPresent(dep -> dependencies.add(ERRORPRONE, dep));
 
         project.getTasks().withType(JavaCompile.class).configureEach(task -> {
             var errorProne =
@@ -250,14 +272,47 @@ final class JavaBuildLogic {
         var tasks = project.getTasks();
         var pitestTask = tasks.named(PitestPlugin.PITEST_TASK_NAME);
         pitestTask.configure(task -> task.mustRunAfter(tasks.withType(Test.class)));
-        tasks.named("check").configure(task -> task.dependsOn(pitestTask));
+        tasks.named(CHECK_TASK).configure(task -> task.dependsOn(pitestTask));
     }
 
     private void configureInternalBom() {
         var dependencies = project.getDependencies();
 
         dependencies.add(
-                "api",
+                API,
                 dependencies.platform(dependencies.project(Map.of("path", ":libprunus-bom"))));
+    }
+
+    private void configureSbomAndLicenseGate() {
+        // java-platform (the BOM) has no runtimeClasspath; nothing to scan or gate.
+        if (project.getConfigurations().findByName(RUNTIME_CLASSPATH) == null) {
+            return;
+        }
+        configureCycloneDxSbom();
+        configureLicenseGate();
+    }
+
+    private void configureCycloneDxSbom() {
+        Provider<RegularFile> sbomJson =
+                project.getLayout().getBuildDirectory().file(SBOM_REPORT_PATH);
+
+        var tasks = project.getTasks();
+        tasks.named(CYCLONEDX_DIRECT_BOM_TASK, CyclonedxDirectTask.class).configure(task -> {
+            task.getIncludeConfigs().set(List.of(RUNTIME_CLASSPATH));
+            task.getSchemaVersion().set(Version.VERSION_16);
+            task.getJsonOutput().set(sbomJson);
+            task.getXmlOutput().unsetConvention();
+        });
+        tasks.named(CHECK_TASK).configure(task -> task.dependsOn(CYCLONEDX_DIRECT_BOM_TASK));
+    }
+
+    private void configureLicenseGate() {
+        LicenseReportExtension licenseReport =
+                project.getExtensions().getByType(LicenseReportExtension.class);
+        licenseReport.allowedLicensesFile = project.getRootProject().file(ALLOWED_LICENSES_FILE);
+        licenseReport.configurations = new String[] {RUNTIME_CLASSPATH};
+        licenseReport.filters = new DependencyFilter[] {new LicenseBundleNormalizer()};
+
+        project.getTasks().named(CHECK_TASK).configure(task -> task.dependsOn(CHECK_LICENSE_TASK));
     }
 }

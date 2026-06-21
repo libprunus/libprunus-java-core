@@ -111,16 +111,16 @@ Applying `org.libprunus.libprunus-core-plugin` is the single entry point. Downst
 
 These versions are pinned in `gradle/libs.versions.toml` (single source), bundled into the plugin, and injected into the consumer build — so consumers need no version management for them:
 
-| Tool | Version | Role |
-| --- | --- | --- |
-| `com.google.errorprone:error_prone_core` | 2.38.0 | Error Prone compiler hosting NullAway |
-| `com.uber.nullaway:nullaway` | 0.12.15 | Null-safety checks + `RequireExplicitNullMarking` enforcement |
-| `org.jspecify:jspecify` | 1.0.0 | `@NullMarked` / `@Nullable` annotations (`api`) |
-| `org.spockframework:spock-core` | 2.4-groovy-4.0 | Spock tests (opt-in via `spockEnabled`) |
-| `org.apache.groovy:groovy` | 4.0.29 | Groovy for Spock (opt-in) |
-| `info.solidsoft.gradle.pitest:gradle-pitest-plugin` | 1.19.0 | Gradle plugin driving PIT |
-| `org.pitest:pitest` | 1.25.5 | PIT mutation engine |
-| `org.pitest:pitest-junit5-plugin` | 1.2.3 | JUnit Platform / Spock support for PIT |
+| Tool | Role |
+| --- | --- |
+| `com.google.errorprone:error_prone_core` | Error Prone compiler hosting NullAway |
+| `com.uber.nullaway:nullaway` | Null-safety checks + `RequireExplicitNullMarking` enforcement |
+| `org.jspecify:jspecify` | `@NullMarked` / `@Nullable` annotations (`api`) |
+| `org.spockframework:spock-core` | Spock tests (opt-in via `spockEnabled`) |
+| `org.apache.groovy:groovy` | Groovy for Spock (opt-in) |
+| `info.solidsoft.gradle.pitest:gradle-pitest-plugin` | Gradle plugin driving PIT |
+| `org.pitest:pitest` | PIT mutation engine |
+| `org.pitest:pitest-junit5-plugin` | JUnit Platform / Spock support for PIT |
 
 ## Documentation
 

@@ -3,7 +3,9 @@ plugins {
 }
 
 dependencies {
+    implementation(libs.cyclonedx.plugin)
     implementation(libs.errorprone.gradle.plugin)
+    implementation(libs.license.report.plugin)
     implementation(libs.pitest.gradle.plugin)
     implementation(libs.sonarqube.plugin)
     implementation(libs.spotless.plugin)

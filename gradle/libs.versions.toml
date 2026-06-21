@@ -1,19 +1,21 @@
 [versions]
-byte-buddy = "1.18.7"
+byte-buddy = "1.18.10"
 cfr = "0.152"
-errorprone-core = "2.38.0"
+cyclonedx = "3.2.4"
+errorprone-core = "2.50.0"
 errorprone-plugin = "5.1.0"
-groovy = "4.0.29"
+groovy = "4.0.32"
 jspecify = "1.0.0"
-logback = "1.5.32"
-nullaway = "0.12.15"
+license-report = "3.1.4"
+logback = "1.5.34"
+nullaway = "0.13.7"
 pitest-core = "1.25.5"
 pitest-junit5 = "1.2.3"
 pitest-plugin = "1.19.0"
-slf4j = "2.0.17"
-sonarqube = "7.3.0.8198"
+slf4j = "2.0.18"
+sonarqube = "7.3.1.8318"
 spock = "2.4-groovy-4.0"
-spotless = "8.5.1"
+spotless = "8.7.0"
 spring-boot = "4.1.0"
 spring-dependency-management = "1.1.7"
 
@@ -21,11 +23,13 @@ spring-dependency-management = "1.1.7"
 byte-buddy = { module = "net.bytebuddy:byte-buddy", version.ref = "byte-buddy" }
 byte-buddy-gradle-plugin = { module = "net.bytebuddy:byte-buddy-gradle-plugin", version.ref = "byte-buddy" }
 cfr = { module = "org.benf:cfr", version.ref = "cfr" }
+cyclonedx-plugin = { module = "org.cyclonedx:cyclonedx-gradle-plugin", version.ref = "cyclonedx" }
 errorprone-core = { module = "com.google.errorprone:error_prone_core", version.ref = "errorprone-core" }
 errorprone-gradle-plugin = { module = "net.ltgt.gradle:gradle-errorprone-plugin", version.ref = "errorprone-plugin" }
 groovy-core = { module = "org.apache.groovy:groovy", version.ref = "groovy" }
 jackson-databind = { module = "tools.jackson.core:jackson-databind" }
 jspecify = { module = "org.jspecify:jspecify", version.ref = "jspecify" }
+license-report-plugin = { module = "com.github.jk1:gradle-license-report", version.ref = "license-report" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 nullaway = { module = "com.uber.nullaway:nullaway", version.ref = "nullaway" }
 pitest-gradle-plugin = { module = "info.solidsoft.gradle.pitest:gradle-pitest-plugin", version.ref = "pitest-plugin" }
@@ -40,3 +44,4 @@ spring-boot-plugin = { module = "org.springframework.boot:spring-boot-gradle-plu
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
 spring-dependency-management-plugin = { module = "io.spring.gradle:dependency-management-plugin", version.ref = "spring-dependency-management" }
+spring-webmvc = { module = "org.springframework:spring-webmvc" }
