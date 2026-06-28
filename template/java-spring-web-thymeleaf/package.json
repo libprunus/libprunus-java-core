@@ -1,0 +1,13 @@
+{
+  "name": "backend-view",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "format": "prettier --write \"src/main/resources/{templates,static}/**/*.{html,css}\"",
+    "format:check": "prettier --check \"src/main/resources/{templates,static}/**/*.{html,css}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2"
+  }
+}

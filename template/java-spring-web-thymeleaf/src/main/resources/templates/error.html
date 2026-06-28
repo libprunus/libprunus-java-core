@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Not found</title>
+    <link rel="stylesheet" th:href="@{/styles.css}" />
+  </head>
+  <body>
+    <main>
+      <h1>Not found</h1>
+      <p th:text="${message}">Message</p>
+      <a th:href="@{/products}">Back to products</a>
+    </main>
+  </body>
+</html>

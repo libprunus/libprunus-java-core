@@ -50,7 +50,7 @@ class IdentityRendererSpec extends Specification {
 
     def "render writes java.lang.String identity form when invoked directly with a String value bypassing the appendObjectTo early-return"() {
         given:
-        def value = 'abc'
+        def value = 'xyz'
         def builder = new StringBuilder()
         def context = new StringBuilderWithContext(builder)
         context.setMaxMessageLength(Integer.MAX_VALUE)
@@ -63,8 +63,8 @@ class IdentityRendererSpec extends Specification {
         builder.toString() == 'java.lang.String@' + expectedHex
         !context.isTruncated()
 
-        and: "toString() / CharSequence path never engaged — payload 'abc' must not appear in the output"
-        !builder.toString().contains('abc')
+        and: "toString() / CharSequence path never engaged — payload 'xyz' (non-hex chars) cannot appear in the output"
+        !builder.toString().contains('xyz')
     }
 
 }

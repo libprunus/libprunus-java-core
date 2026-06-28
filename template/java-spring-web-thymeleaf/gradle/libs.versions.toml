@@ -1,0 +1,23 @@
+[versions]
+springBoot = "4.1.0"
+nodeGradle = "7.1.0"
+dependencyAnalysis = "3.15.0"
+libprunus = "0.1.2-SNAPSHOT"
+
+[libraries]
+spring-boot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBoot" }
+spring-boot-starter-webmvc = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
+spring-boot-starter-thymeleaf = { module = "org.springframework.boot:spring-boot-starter-thymeleaf" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
+spring-boot-starter-webmvc-test = { module = "org.springframework.boot:spring-boot-starter-webmvc-test" }
+spring-boot-starter-jdbc-test = { module = "org.springframework.boot:spring-boot-starter-jdbc-test" }
+libprunus-spring = { module = "org.libprunus:libprunus-spring", version.ref = "libprunus" }
+libprunus-bom = { module = "org.libprunus:libprunus-bom", version.ref = "libprunus" }
+spring-boot-starter-jdbc = { module = "org.springframework.boot:spring-boot-starter-jdbc" }
+h2 = { module = "com.h2database:h2" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
+node-gradle = { id = "com.github.node-gradle.node", version.ref = "nodeGradle" }
+dependency-analysis = { id = "com.autonomousapps.dependency-analysis", version.ref = "dependencyAnalysis" }
+libprunus-core-plugin = { id = "org.libprunus.libprunus-core-plugin", version.ref = "libprunus" }
