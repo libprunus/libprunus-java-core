@@ -51,10 +51,8 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
                 exception, problem, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
 
-    // Every handled exception funnels through createResponseEntity with the final body. Built-in MVC
-    // exceptions pass body=null and have their ProblemDetail materialized inside the framework's
-    // handleExceptionInternal, so the uniform code must be stamped here (where the body is final),
-    // not in handleExceptionInternal (where a built-in body is still null).
+    // All handled exceptions reach createResponseEntity with their body finalized — built-in MVC ones are
+    // still null in handleExceptionInternal — so this is the one place the uniform code can be stamped.
     @Override
     protected ResponseEntity<Object> createResponseEntity(
             @Nullable Object body, HttpHeaders headers, HttpStatusCode statusCode, WebRequest request) {

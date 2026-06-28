@@ -25,7 +25,9 @@ public class CoreRuntimeConfigAutoConfiguration implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() {
-        LogRuntime.invokeCallsiteBinding(classLoader);
+        if (!LogRuntime.isBindingInitialized()) {
+            LogRuntime.invokeCallsiteBinding(classLoader);
+        }
     }
 
     @Bean

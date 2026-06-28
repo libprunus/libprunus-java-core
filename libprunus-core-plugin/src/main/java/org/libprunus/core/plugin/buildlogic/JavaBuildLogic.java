@@ -14,7 +14,7 @@ import net.ltgt.gradle.errorprone.ErrorPronePlugin;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.ExtensionAware;
-import org.gradle.api.plugins.JavaLibraryPlugin;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.compile.JavaCompile;
@@ -32,7 +32,7 @@ import org.gradle.testing.jacoco.tasks.rules.JacocoViolationRule;
 public final class JavaBuildLogic {
 
     private static final String UTF_8 = StandardCharsets.UTF_8.name();
-    private static final String API = "api";
+    private static final String COMPILE_ONLY = "compileOnly";
     private static final String ERRORPRONE = "errorprone";
     private static final String TEST_IMPLEMENTATION = "testImplementation";
     private static final String TEST_RUNTIME_ONLY = "testRuntimeOnly";
@@ -68,7 +68,7 @@ public final class JavaBuildLogic {
         var pluginManager = project.getPluginManager();
 
         pluginManager.apply(JacocoPlugin.class);
-        pluginManager.apply(JavaLibraryPlugin.class);
+        pluginManager.apply(JavaPlugin.class);
         pluginManager.apply(SpotlessPlugin.class);
         pluginManager.apply(ErrorPronePlugin.class);
     }
@@ -96,6 +96,7 @@ public final class JavaBuildLogic {
             options.setEncoding(UTF_8);
             options.setCharSet(UTF_8);
             options.setDocEncoding(UTF_8);
+            options.addBooleanOption("Xdoclint:all,-missing", true);
         });
     }
 
@@ -154,7 +155,6 @@ public final class JavaBuildLogic {
 
     private void declareTestDependencies() {
         var dependencies = project.getDependencies();
-        dependencies.add(TEST_IMPLEMENTATION, "org.junit.jupiter:junit-jupiter");
         dependencies.add(TEST_RUNTIME_ONLY, "org.junit.platform:junit-platform-launcher");
     }
 
@@ -208,7 +208,7 @@ public final class JavaBuildLogic {
 
     private void configureErrorProne() {
         var dependencies = project.getDependencies();
-        dependencies.add(API, "org.jspecify:jspecify:" + TOOL_VERSIONS.getProperty("jspecify"));
+        dependencies.add(COMPILE_ONLY, "org.jspecify:jspecify:" + TOOL_VERSIONS.getProperty("jspecify"));
         dependencies.add(
                 ERRORPRONE, "com.google.errorprone:error_prone_core:" + TOOL_VERSIONS.getProperty("errorprone-core"));
         dependencies.add(ERRORPRONE, "com.uber.nullaway:nullaway:" + TOOL_VERSIONS.getProperty("nullaway"));

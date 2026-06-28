@@ -2,6 +2,7 @@ package org.libprunus.core.plugin.aot.log.contract
 
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import org.libprunus.core.plugin.testutil.IntegrationTestRepo
 
 final class ContractProjectHarness {
 
@@ -175,23 +176,6 @@ final class ContractProjectHarness {
             'contract.Inh3CDoLogFromPDoLogGpDoLogSubject',
     ]
 
-    static File findRepoRoot() {
-        File current = new File(System.getProperty('user.dir')).canonicalFile
-        while (current != null && !new File(current, 'settings.gradle.kts').exists()) {
-            current = current.parentFile
-        }
-        assert current != null
-        current
-    }
-
-    static String readLibprunusVersion(File repoRoot) {
-        def props = new Properties()
-        new File(repoRoot, 'gradle.properties').withInputStream { props.load(it) }
-        def v = props.getProperty('version')
-        assert v, "version not set in ${repoRoot}/gradle.properties"
-        v
-    }
-
     static void writeBaseProject(File projectDir,
             List<String> dtoFqcns = DEFAULT_DTO_FQCNS,
             List<String> serviceFqcns = DEFAULT_SERVICE_FQCNS) {
@@ -253,16 +237,14 @@ final class ContractProjectHarness {
                                      String logRegistryClass,
                                      String logbackXml,
                                      boolean multiPackage) {
-        def repoRoot = findRepoRoot()
-        def version = readLibprunusVersion(repoRoot)
-        def escapedRepoRoot = repoRoot.absolutePath.replace('\\', '\\\\')
+        def escapedRepo = IntegrationTestRepo.escapedPath()
+        def version = IntegrationTestRepo.CORE_VERSION
 
         new File(projectDir, 'settings.gradle').text = """
 rootProject.name = 'sample-app'
-includeBuild('${escapedRepoRoot}')
 """.stripIndent()
 
-        new File(projectDir, 'build.gradle').text = renderBuildGradle(version, dtoFqcns, serviceFqcns, logRegistryClass)
+        new File(projectDir, 'build.gradle').text = renderBuildGradle(escapedRepo, version, dtoFqcns, serviceFqcns, logRegistryClass)
 
         if (multiPackage) {
             writeMultiPackageFixtures(projectDir, fixtureResourceDirs)
@@ -275,7 +257,8 @@ includeBuild('${escapedRepoRoot}')
         new File(resourcesDir, 'logback.xml').text = logbackXml
     }
 
-    private static String renderBuildGradle(String version,
+    private static String renderBuildGradle(String escapedRepo,
+                                            String version,
                                             List<String> dtoFqcns,
                                             List<String> serviceFqcns,
                                             String logRegistryClass) {
@@ -294,11 +277,13 @@ prunus {
 }
 
 repositories {
+    maven { url '${escapedRepo}'; metadataSources { artifact() } }
     mavenCentral()
 }
 
 dependencies {
     implementation "org.libprunus:libprunus-core:${version}"
+    implementation 'org.slf4j:slf4j-api:2.0.18'
     runtimeOnly 'ch.qos.logback:logback-classic:1.5.16'
 }
 

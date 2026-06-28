@@ -20,6 +20,7 @@ import org.gradle.api.plugins.GroovyPlugin;
 import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
 import org.gradle.api.tasks.testing.Test;
@@ -57,6 +58,11 @@ final class JavaBuildLogic {
     private static final String SBOM_REPORT_PATH = "reports/sbom/bom.json";
     private static final String ALLOWED_LICENSES_FILE = "config/allowed-licenses.json";
 
+    private static final String CORE_PROJECT = ":libprunus-core";
+    private static final String PLUGIN_PROJECT = ":libprunus-core-plugin";
+    private static final String INTEGRATION_TEST_CORE_VERSION = "0.0.1-integration-test";
+    private static final String INTEGRATION_TEST_REPO = "plugin-integration-test-repo";
+
     private static final List<String> COMPILER_ARGS =
             List.of("-parameters", "-Xlint:all,-serial,-processing,-classfile,-this-escape", "-Werror");
 
@@ -86,6 +92,7 @@ final class JavaBuildLogic {
 
         configureInternalBom();
         configureSbomAndLicenseGate();
+        configurePluginIntegrationTestCoreRepo();
     }
 
     private void applyNecessaryPlugins() {
@@ -121,6 +128,7 @@ final class JavaBuildLogic {
             options.setEncoding(UTF_8);
             options.setCharSet(UTF_8);
             options.setDocEncoding(UTF_8);
+            options.addBooleanOption("Xdoclint:all,-missing", true);
         });
     }
 
@@ -181,7 +189,6 @@ final class JavaBuildLogic {
             libs.findLibrary("groovy-core").ifPresent(dep -> dependencies.add(TEST_IMPLEMENTATION, dep));
             libs.findLibrary("spock-core").ifPresent(dep -> dependencies.add(TEST_IMPLEMENTATION, dep));
         }
-        dependencies.add(TEST_IMPLEMENTATION, "org.junit.jupiter:junit-jupiter");
         dependencies.add(TEST_RUNTIME_ONLY, "org.junit.platform:junit-platform-launcher");
     }
 
@@ -314,5 +321,36 @@ final class JavaBuildLogic {
         licenseReport.filters = new DependencyFilter[] {new LicenseBundleNormalizer()};
 
         project.getTasks().named(CHECK_TASK).configure(task -> task.dependsOn(CHECK_LICENSE_TASK));
+    }
+
+    // Lets the plugin's TestKit specs resolve libprunus-core as an ordinary Maven dependency from an
+    // isolated build-local repo, avoiding an includeBuild composite that reconfigures every module per build().
+    private void configurePluginIntegrationTestCoreRepo() {
+        if (CORE_PROJECT.equals(project.getPath())) {
+            installCoreIntoIntegrationTestRepo();
+        } else if (PLUGIN_PROJECT.equals(project.getPath())) {
+            wireIntegrationTestRepoIntoPluginTests();
+        }
+    }
+
+    private void installCoreIntoIntegrationTestRepo() {
+        // Installs only the bare jar; samples resolve it via metadataSources { artifact() } (no transitive metadata).
+        // slf4j is the plugin's weaving contract, so each AOT sample declares logback-classic itself.
+        var destination = project.getRootProject().getLayout().getBuildDirectory()
+                .dir(INTEGRATION_TEST_REPO + "/org/libprunus/libprunus-core/" + INTEGRATION_TEST_CORE_VERSION);
+        String artifactName = "libprunus-core-" + INTEGRATION_TEST_CORE_VERSION;
+        project.getTasks().register("installCoreToIntegrationTestRepo", Copy.class, task -> {
+            task.into(destination);
+            task.from(project.getTasks().named("jar"), spec -> spec.rename(name -> artifactName + ".jar"));
+        });
+    }
+
+    private void wireIntegrationTestRepoIntoPluginTests() {
+        // Specs derive the repo path and version from build constants, so every runner — including PIT's
+        // forked minion — needs no injected systemProperties, only the artifact installed first.
+        var installTask = CORE_PROJECT + ":installCoreToIntegrationTestRepo";
+        project.getTasks().withType(Test.class).configureEach(test -> test.dependsOn(installTask));
+        project.getTasks().named(PitestPlugin.PITEST_TASK_NAME)
+                .configure(task -> task.dependsOn(installTask));
     }
 }

@@ -9,9 +9,8 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 
 public final class AotClassFileLocatorFactory {
 
-    // WHY: TypePool drops annotations whose type cannot be resolved via the locator;
-    // registry-class annotations live in libprunus-core jar reachable only via runtime classpath.
-    // Bootloader locator must be a shared singleton — closing it would invalidate every subsequent build.
+    // Annotations on registry classes (in the libprunus-core jar) resolve only via the runtime classpath,
+    // and TypePool silently drops any the locator can't resolve. Shared singleton — closing it breaks later builds.
     static final ClassFileLocator BOOT_LOADER_LOCATOR = ClassFileLocator.ForClassLoader.ofBootLoader();
 
     private AotClassFileLocatorFactory() {

@@ -11,8 +11,7 @@ class AotConfigurerBindingIdResolutionIntegrationSpec extends Specification {
 
     def "generateAotBinding uses resolved provider coordinate values for bindingId"() {
         given:
-        def repoRoot = findRepoRoot()
-        writeSampleProjectWithProviderCoordinates(testProjectDir, repoRoot, "org.provider", "2.0.0", true, null)
+        writeSampleProjectWithProviderCoordinates(testProjectDir, "org.provider", "2.0.0", true, null)
 
         when:
         def result = GradleRunner.create()
@@ -28,8 +27,7 @@ class AotConfigurerBindingIdResolutionIntegrationSpec extends Specification {
 
     def "generateAotBinding normalizes unicode-surrounded provider coordinates before hashing"() {
         given:
-        def repoRoot = findRepoRoot()
-        writeSampleProjectWithProviderCoordinates(testProjectDir, repoRoot, " org.provider ", " 2.0.0 ", true, null)
+        writeSampleProjectWithProviderCoordinates(testProjectDir, " org.provider ", " 2.0.0 ", true, null)
 
         when:
         def result = GradleRunner.create()
@@ -45,8 +43,7 @@ class AotConfigurerBindingIdResolutionIntegrationSpec extends Specification {
 
     def "bindingId resolves at LIBRARY mode without binding generateAotBinding to the build lifecycle"() {
         given:
-        def repoRoot = findRepoRoot()
-        writeSampleProjectWithProviderCoordinates(testProjectDir, repoRoot, "org.provider", "2.0.0", true, "LIBRARY")
+        writeSampleProjectWithProviderCoordinates(testProjectDir, "org.provider", "2.0.0", true, "LIBRARY")
 
         when:
         def result = GradleRunner.create()
@@ -61,26 +58,14 @@ class AotConfigurerBindingIdResolutionIntegrationSpec extends Specification {
         result.output.contains(':assertGenerateAotBindingOnlyIfNotSatisfied')
     }
 
-    private static File findRepoRoot() {
-        File current = new File(System.getProperty('user.dir')).canonicalFile
-        while (current != null && !new File(current, 'settings.gradle.kts').exists()) {
-            current = current.parentFile
-        }
-        assert current != null
-        current
-    }
-
     private static void writeSampleProjectWithProviderCoordinates(
             File projectDir,
-            File repoRoot,
             String providerGroup,
             String providerVersion,
             boolean enabled,
             String modeName) {
-        def escapedRepoRoot = repoRoot.absolutePath.replace('\\', '\\\\')
         new File(projectDir, 'settings.gradle').text = """
 rootProject.name = 'binding-provider-app'
-includeBuild('${escapedRepoRoot}')
 """.stripIndent().trim() + "\n"
 
         def escapedGroup = providerGroup

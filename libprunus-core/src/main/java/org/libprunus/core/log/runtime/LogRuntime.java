@@ -131,6 +131,10 @@ public final class LogRuntime {
         return boundMaxMessageLength;
     }
 
+    public static boolean isBindingInitialized() {
+        return bindingInitialized;
+    }
+
     static AbstractLogConfig globalConfigBinding() {
         return boundConfig;
     }

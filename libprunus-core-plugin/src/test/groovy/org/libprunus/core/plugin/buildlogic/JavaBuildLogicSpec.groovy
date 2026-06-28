@@ -10,6 +10,7 @@ import org.gradle.api.Project
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.plugins.JavaLibraryPlugin
+import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.javadoc.Javadoc
@@ -46,7 +47,7 @@ class JavaBuildLogicSpec extends Specification {
         noExceptionThrown()
     }
 
-    def "applyNecessaryPlugins applies jacoco java library and spotless plugins"() {
+    def "applyNecessaryPlugins applies jacoco java and spotless plugins"() {
         given:
         project = createProject("apply-plugins")
         subject = new JavaBuildLogic(project, project.objects.newInstance(JavaBuildExtension))
@@ -56,7 +57,8 @@ class JavaBuildLogicSpec extends Specification {
 
         then:
         project.plugins.hasPlugin(JacocoPlugin)
-        project.plugins.hasPlugin(JavaLibraryPlugin)
+        project.plugins.hasPlugin(JavaPlugin)
+        !project.plugins.hasPlugin(JavaLibraryPlugin)
         project.plugins.hasPlugin(SpotlessPlugin)
     }
 
@@ -293,7 +295,7 @@ class JavaBuildLogicSpec extends Specification {
 
         then:
         def testImpl = dependencyCoordinates(project, "testImplementation")
-        testImpl.contains("org.junit.jupiter:junit-jupiter")
+        !testImpl.contains("org.junit.jupiter:junit-jupiter")
         dependencyCoordinates(project, "testRuntimeOnly").contains("org.junit.platform:junit-platform-launcher")
     }
 
@@ -467,7 +469,7 @@ class JavaBuildLogicSpec extends Specification {
         kotlinGradleFormat.@steps.size() >= 2
     }
 
-    def "configureErrorProne registers jspecify api dependency and error prone tooling on errorprone configuration"() {
+    def "configureErrorProne registers jspecify compileOnly dependency and error prone tooling on errorprone configuration"() {
         given:
         project = createProject("configure-errorprone-deps")
         subject = new JavaBuildLogic(project, project.objects.newInstance(JavaBuildExtension))
@@ -477,7 +479,7 @@ class JavaBuildLogicSpec extends Specification {
         subject.configureErrorProne()
 
         then:
-        dependencyCoordinates(project, "api").contains("org.jspecify:jspecify")
+        dependencyCoordinates(project, "compileOnly").contains("org.jspecify:jspecify")
         def errorproneDeps = dependencyCoordinates(project, "errorprone")
         errorproneDeps.contains("com.google.errorprone:error_prone_core")
         errorproneDeps.contains("com.uber.nullaway:nullaway")

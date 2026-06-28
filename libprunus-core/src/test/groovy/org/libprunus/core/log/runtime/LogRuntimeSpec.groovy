@@ -132,6 +132,23 @@ class LogRuntimeSpec extends Specification {
         !LogRuntime.globalConfigBinding().is(AbstractLogConfig.DEFAULT)
     }
 
+    def "isBindingInitialized reports false before binding and true once the once-only slot is consumed"() {
+        given:
+        LogRuntimeTestSupport.resetBinding()
+
+        expect: "a freshly reset runtime reports no binding"
+        !LogRuntime.isBindingInitialized()
+
+        when: "a valid binding is published"
+        LogRuntime.initializeBinding(new AbstractLogConfig() {
+            @Override int getMaxMessageLength() { return 512 }
+            @Override boolean isWhitelisted(Class<?> type) { return false }
+        })
+
+        then: "the flag flips to initialized"
+        LogRuntime.isBindingInitialized()
+    }
+
     def "invokeCallsiteBinding throws NullPointerException when classLoader is null"() {
         when:
         LogRuntime.invokeCallsiteBinding(null)

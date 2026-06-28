@@ -50,11 +50,9 @@ public final class StringBuilderWithContextToStringOomSelectionProbe {
         } catch (OutOfMemoryError _) {
             hogs.clear();
             hogs = null;
-            // Primary direction verified: toString-failure (OOM, an Error) was selected over the
-            // original RuntimeException. The JVM-thrown pre-allocated OOM has suppressedExceptions
-            // disabled (to avoid OOM-during-OOM), so the production addSuppressed call is a no-op
-            // here by design and is not asserted; the dual-channel selection at the unit level
-            // would instead need a non-VM Error which cannot be injected without final-class mocking.
+            // Primary direction: the toString OOM (an Error) was selected over the original RuntimeException.
+            // The VM's pre-allocated OOM disables suppression, so the production addSuppressed is a no-op here
+            // and isn't asserted — asserting it would need a non-VM Error, impossible without final-class mocking.
             System.out.println("TOSTRING_OOM_SELECTION_OK");
         } catch (Throwable other) {
             hogs.clear();

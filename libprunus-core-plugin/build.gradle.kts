@@ -9,7 +9,7 @@ plugins {
 
 dependencies {
     implementation(project(":libprunus-core"))
-    implementation(libs.byte.buddy)
+    api(libs.byte.buddy)
     implementation(libs.byte.buddy.gradle.plugin)
     implementation(libs.errorprone.gradle.plugin)
     implementation(libs.pitest.gradle.plugin)

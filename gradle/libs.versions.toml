@@ -17,7 +17,6 @@ sonarqube = "7.3.1.8318"
 spock = "2.4-groovy-4.0"
 spotless = "8.7.0"
 spring-boot = "4.1.0"
-spring-dependency-management = "1.1.7"
 
 [libraries]
 byte-buddy = { module = "net.bytebuddy:byte-buddy", version.ref = "byte-buddy" }
@@ -43,5 +42,4 @@ spring-boot-jackson = { module = "org.springframework.boot:spring-boot-jackson" 
 spring-boot-plugin = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "spring-boot" }
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
-spring-dependency-management-plugin = { module = "io.spring.gradle:dependency-management-plugin", version.ref = "spring-dependency-management" }
 spring-webmvc = { module = "org.springframework:spring-webmvc" }

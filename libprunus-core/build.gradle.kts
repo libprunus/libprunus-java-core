@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     api(libs.slf4j.api)
-    testImplementation(libs.logback.classic)
+    testRuntimeOnly(libs.logback.classic)
 }
 
 publishing {

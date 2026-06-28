@@ -4,6 +4,7 @@ import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import org.gradle.testkit.runner.GradleRunner
 import org.libprunus.core.plugin.aot.PrunusPluginConstants
+import org.libprunus.core.plugin.testutil.IntegrationTestRepo
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -17,8 +18,7 @@ class LibprunusCorePluginIntegrationSpec extends Specification {
 
     def "verifyAotInstrumentation reuses configuration cache across consecutive real Gradle build runs"() {
         given:
-        def repoRoot = findRepoRoot()
-        writeSampleProject(testProjectDir, repoRoot)
+        writeSampleProject(testProjectDir)
 
         when:
         def firstResult = GradleRunner.create()
@@ -43,9 +43,8 @@ class LibprunusCorePluginIntegrationSpec extends Specification {
 
     def "plugin weaves compiled classes in different project paths"() {
         given:
-        def repoRoot = findRepoRoot()
-        writeSampleProject(testProjectDir, repoRoot)
-        writeSampleProject(anotherTestProjectDir, repoRoot)
+        writeSampleProject(testProjectDir)
+        writeSampleProject(anotherTestProjectDir)
 
         when:
         def firstResult = GradleRunner.create()
@@ -70,8 +69,7 @@ class LibprunusCorePluginIntegrationSpec extends Specification {
 
     def "compiled classes stay in classes/java/main and no Byte Buddy reroute happens when AOT is left disabled"() {
         given:
-        def repoRoot = findRepoRoot()
-        writeAotDisabledProject(testProjectDir, repoRoot)
+        writeAotDisabledProject(testProjectDir)
 
         when:
         def result = GradleRunner.create()
@@ -89,8 +87,7 @@ class LibprunusCorePluginIntegrationSpec extends Specification {
 
     def "byteBuddy task registers classes output directory as project-relative forward-slash path"() {
         given:
-        def repoRoot = findRepoRoot()
-        writeSampleProjectWithPropertyInspectionTask(testProjectDir, repoRoot)
+        writeSampleProjectWithPropertyInspectionTask(testProjectDir)
 
         when:
         def result = GradleRunner.create()
@@ -109,19 +106,9 @@ class LibprunusCorePluginIntegrationSpec extends Specification {
         !propValue.contains('\\')
     }
 
-    private static File findRepoRoot() {
-        File current = new File(System.getProperty('user.dir')).canonicalFile
-        while (current != null && !new File(current, 'settings.gradle.kts').exists()) {
-            current = current.parentFile
-        }
-        assert current != null
-        current
-    }
-
     def "plugin fails fast when toStringWhitelist contains missing type"() {
         given:
-        def repoRoot = findRepoRoot()
-        writeSampleProject(testProjectDir, repoRoot, ["sample.MissingWhitelistType"])
+        writeSampleProject(testProjectDir, ["sample.MissingWhitelistType"])
 
         when:
         def result = GradleRunner.create()
@@ -140,8 +127,7 @@ class LibprunusCorePluginIntegrationSpec extends Specification {
 
     def "classes output contains binding impl and runtime callsite class files"() {
         given:
-        def repoRoot = findRepoRoot()
-        writeSampleProject(testProjectDir, repoRoot)
+        writeSampleProject(testProjectDir)
 
         when:
         def result = GradleRunner.create()
@@ -164,8 +150,7 @@ class LibprunusCorePluginIntegrationSpec extends Specification {
 
     def "runtime classpath can invoke generated runtime binding callsite"() {
         given:
-        def repoRoot = findRepoRoot()
-        writeSampleProject(testProjectDir, repoRoot)
+        writeSampleProject(testProjectDir)
 
         when:
         def result = GradleRunner.create()
@@ -181,8 +166,7 @@ class LibprunusCorePluginIntegrationSpec extends Specification {
 
     def "runtime classpath can discover and invoke callsite via pointer file"() {
         given:
-        def repoRoot = findRepoRoot()
-        writeSampleProject(testProjectDir, repoRoot)
+        writeSampleProject(testProjectDir)
 
         when:
         def result = GradleRunner.create()
@@ -198,8 +182,7 @@ class LibprunusCorePluginIntegrationSpec extends Specification {
 
     def "resolve task fails when explicit provider binding class property points to missing class"() {
         given:
-        def repoRoot = findRepoRoot()
-        writeSampleProject(testProjectDir, repoRoot)
+        writeSampleProject(testProjectDir)
         writeExplicitBindingProperty(testProjectDir, 'sample.MissingBinding')
 
         when:
@@ -218,8 +201,7 @@ class LibprunusCorePluginIntegrationSpec extends Specification {
 
     def "resolve task succeeds when explicit provider binding class property points to existing runtime dependency class"() {
         given:
-        def repoRoot = findRepoRoot()
-        writeSampleProject(testProjectDir, repoRoot)
+        writeSampleProject(testProjectDir)
         writeRuntimeOnlyDependencyForBindingClass(testProjectDir, 'sample.CustomBinding')
         writeExplicitBindingProperty(testProjectDir, 'sample.CustomBinding')
 
@@ -237,13 +219,11 @@ class LibprunusCorePluginIntegrationSpec extends Specification {
 
     def "build fails when a production package lacks @NullMarked (RequireExplicitNullMarking)"() {
         given:
-        def repoRoot = findRepoRoot()
-        def escapedRepoRoot = repoRoot.absolutePath.replace('\\', '\\\\')
+        def escapedRepo = IntegrationTestRepo.escapedPath()
         new File(testProjectDir, 'settings.gradle').text = """
 rootProject.name = 'require-null-marking'
-includeBuild('${escapedRepoRoot}')
 """.stripIndent()
-        new File(testProjectDir, 'build.gradle').text = '''
+        new File(testProjectDir, 'build.gradle').text = ('''
 plugins {
     id 'org.libprunus.libprunus-core-plugin'
 }
@@ -251,7 +231,7 @@ plugins {
 repositories {
     mavenCentral()
 }
-'''
+''').replace('mavenCentral()', "maven { url '${escapedRepo}'; metadataSources { artifact() } }\n    mavenCentral()")
         def sourceDir = new File(testProjectDir, 'src/main/java/sample')
         sourceDir.mkdirs()
         new File(sourceDir, 'Unmarked.java').text = '''
@@ -273,17 +253,16 @@ public class Unmarked {}
         result.output.contains('Unmarked.java')
     }
 
-    private static void writeSampleProject(File projectDir, File repoRoot) {
-        writeSampleProject(projectDir, repoRoot, [])
+    private static void writeSampleProject(File projectDir) {
+        writeSampleProject(projectDir, [])
     }
 
-    private static void writeAotDisabledProject(File projectDir, File repoRoot) {
-        def escapedRepoRoot = repoRoot.absolutePath.replace('\\', '\\\\')
+    private static void writeAotDisabledProject(File projectDir) {
+        def escapedRepo = IntegrationTestRepo.escapedPath()
         new File(projectDir, 'settings.gradle').text = """
 rootProject.name = 'aot-disabled-app'
-includeBuild('${escapedRepoRoot}')
 """.stripIndent()
-        new File(projectDir, 'build.gradle').text = '''
+        new File(projectDir, 'build.gradle').text = ('''
 plugins {
     id 'org.libprunus.libprunus-core-plugin'
 }
@@ -295,7 +274,7 @@ repositories {
 tasks.withType(JavaCompile).configureEach {
     options.errorprone.disable('RequireExplicitNullMarking')
 }
-'''
+''').replace('mavenCentral()', "maven { url '${escapedRepo}'; metadataSources { artifact() } }\n    mavenCentral()")
         def sourceDir = new File(projectDir, 'src/main/java/sample')
         sourceDir.mkdirs()
         new File(sourceDir, 'PlainService.java').text = '''
@@ -327,17 +306,16 @@ public class PlainService {
         new File(projectDir, 'build.gradle') << "\ndependencies {\n    runtimeOnly files('libs/custom-binding.jar')\n}\n"
     }
 
-    private static void writeSampleProject(File projectDir, File repoRoot, List<String> toStringWhitelist) {
-        def escapedRepoRoot = repoRoot.absolutePath.replace('\\', '\\\\')
+    private static void writeSampleProject(File projectDir, List<String> toStringWhitelist) {
         def whitelistAnnotation = toStringWhitelist.isEmpty()
             ? ""
             : "@DirectToStringWhitelist({${toStringWhitelist.collect { "${it}.class" }.join(', ')}})"
-        def whitelistVerification = ""
+        def escapedRepo = IntegrationTestRepo.escapedPath()
+        def coreVersion = IntegrationTestRepo.CORE_VERSION
         new File(projectDir, 'settings.gradle').text = """
 rootProject.name = 'sample-app'
-includeBuild('${escapedRepoRoot}')
 """.stripIndent()
-        new File(projectDir, 'build.gradle').text = '''
+        new File(projectDir, 'build.gradle').text = ('''
 plugins {
     id 'org.libprunus.libprunus-core-plugin'
 }
@@ -359,6 +337,7 @@ tasks.withType(JavaCompile).configureEach {
 
 dependencies {
     implementation 'org.libprunus:libprunus-core:0.0.1-SNAPSHOT'
+    runtimeOnly 'ch.qos.logback:logback-classic:1.5.16'
 }
 
 def mainClassesDir = layout.buildDirectory.dir('classes/java/main')
@@ -408,7 +387,7 @@ tasks.register('verifyAotInstrumentation') {
         assert serviceContent.contains('|< [EXIT] SampleService.work(value='), 'SampleService.work must have exit log'
         assert serviceContent.contains('|> [ENTER] SampleService.classify(n='), 'SampleService.classify must have entry log'
         assert serviceContent.contains('|< [EXIT] SampleService.classify(value='), 'SampleService.classify must have exit log at each return path'
-''' + whitelistVerification + '''
+
     }
 }
 
@@ -458,7 +437,7 @@ tasks.register('verifyAotRuntimeCallsiteDiscovery') {
         assert globalBinding.getClass().name.endsWith('.LogConfigBindingImpl'), 'LogRuntime binding must be generated LogConfigBindingImpl after callsite discovery'
     }
 }
-'''
+''').replace('mavenCentral()', "maven { url '${escapedRepo}'; metadataSources { artifact() } }\n    mavenCentral()").replace('0.0.1-SNAPSHOT', coreVersion)
         def sourceDir = new File(projectDir, 'src/main/java/sample')
         sourceDir.mkdirs()
         new File(sourceDir, 'SampleService.java').text = '''
@@ -615,13 +594,13 @@ public class LogContextRegistry {
 '''
     }
 
-    private static void writeSampleProjectWithPropertyInspectionTask(File projectDir, File repoRoot) {
-        def escapedRepoRoot = repoRoot.absolutePath.replace('\\', '\\\\')
+    private static void writeSampleProjectWithPropertyInspectionTask(File projectDir) {
+        def escapedRepo = IntegrationTestRepo.escapedPath()
+        def coreVersion = IntegrationTestRepo.CORE_VERSION
         new File(projectDir, 'settings.gradle').text = """
 rootProject.name = 'sample-app'
-includeBuild('${escapedRepoRoot}')
 """.stripIndent()
-        new File(projectDir, 'build.gradle').text = '''
+        new File(projectDir, 'build.gradle').text = ('''
 plugins {
     id 'org.libprunus.libprunus-core-plugin'
 }
@@ -651,7 +630,7 @@ tasks.register('printByteBuddyClassesOutputDir') {
         println "CLASSES_DIR_PROP=${bbTask.inputs.properties['prunusAotClassesOutputDir']}"
     }
 }
-'''
+''').replace('mavenCentral()', "maven { url '${escapedRepo}'; metadataSources { artifact() } }\n    mavenCentral()").replace('0.0.1-SNAPSHOT', coreVersion)
         def sourceDir = new File(projectDir, 'src/main/java/sample')
         sourceDir.mkdirs()
         new File(sourceDir, 'Dummy.java').text = '''

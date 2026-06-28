@@ -2,6 +2,10 @@ pluginManagement {
     includeBuild("build-logic")
 }
 
+plugins {
+    id("com.autonomousapps.build-health") version "3.16.0"
+}
+
 dependencyResolutionManagement {
     repositories {
         mavenLocal()

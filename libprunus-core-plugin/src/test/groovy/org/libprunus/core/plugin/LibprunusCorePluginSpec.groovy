@@ -6,6 +6,7 @@ import net.bytebuddy.build.gradle.AbstractByteBuddyTask
 import org.gradle.api.Task
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaLibraryPlugin
+import org.gradle.api.plugins.JavaPlugin
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testing.jacoco.plugins.JacocoPlugin
 import org.libprunus.core.plugin.aot.AotExtension
@@ -32,7 +33,7 @@ class LibprunusCorePluginSpec extends Specification {
         ((PrunusExtension) prunus).javaBuild instanceof JavaBuildExtension
     }
 
-    def "apply wires javaBuildLogic side effects (jacoco plus java-library plus spotless tasks)"() {
+    def "apply wires javaBuildLogic side effects (jacoco plus java plus spotless tasks)"() {
         given:
         def project = ProjectBuilder.builder().withName("libprunus-core-plugin-javabuild").build()
         def plugin = new LibprunusCorePlugin()
@@ -43,7 +44,8 @@ class LibprunusCorePluginSpec extends Specification {
 
         then:
         project.plugins.hasPlugin(JacocoPlugin)
-        project.plugins.hasPlugin(JavaLibraryPlugin)
+        project.plugins.hasPlugin(JavaPlugin)
+        !project.plugins.hasPlugin(JavaLibraryPlugin)
         project.tasks.findByName("spotlessJava") != null
         project.tasks.findByName("spotlessKotlinGradle") != null
     }

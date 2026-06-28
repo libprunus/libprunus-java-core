@@ -79,9 +79,8 @@ public final class RecoverToStringFallbackInnerFailureProbe {
             System.out.println("INNER_NON_SOE_ERROR_FAILED_NO_THROW");
             System.exit(1);
         } catch (OutOfMemoryError caught) {
-            // Diagnostic-only: VM pre-allocated OOM has enableSuppression=false, so
-            // addSuppressed is silently dropped by the JVM. Print the observed values without
-            // gating on them.
+            // Diagnostic-only: the VM's pre-allocated OOM has enableSuppression=false, so addSuppressed
+            // is silently dropped; print the observed values without gating on them.
             boolean originalSuppressed = false;
             for (Throwable s : caught.getSuppressed()) {
                 if (s == original) {
@@ -113,10 +112,8 @@ public final class RecoverToStringFallbackInnerFailureProbe {
         try {
             fallback = StringBuilderWithContext.recoverToStringFallback("probe", context, original);
         } catch (ArrayIndexOutOfBoundsException releaseAioobe) {
-            // Expected secondary effect: StringBuilderPool.release calls reset(0) →
-            // setLength(0), and AbstractStringBuilder.setLength fills the slot range using the
-            // corrupted negative count, raising AIOOBE. Its presence proves line 491 release ran
-            // (and therefore the non-Error catch branch on line 489 ran first).
+            // Expected side effect: release()'s reset(0) → setLength(0) fills the slot range with the
+            // corrupted negative count, raising AIOOBE — proof the non-Error catch branch ran, then released.
             releaseLeak = releaseAioobe;
         } catch (Throwable unexpected) {
             System.out.println("INNER_NON_ERROR_THROWABLE_FAILED_TYPE_"
@@ -126,9 +123,8 @@ public final class RecoverToStringFallbackInnerFailureProbe {
             return;
         }
 
-        // Verify the non-Error catch branch executed: LoggingFailureReporter wrote a marker for
-        // the inner IllegalArgumentException to stderr, captured through redirectErrorStream.
-        // (We can't read stderr from inside the probe; the caller asserts on the merged stream.)
+        // The non-Error catch branch makes LoggingFailureReporter write a marker for the inner IAE to
+        // stderr; the probe can't read stderr, so the caller asserts on the redirect-merged stream.
         System.out.println("INNER_NON_ERROR_THROWABLE_OK");
         System.out.println("INNER_CATCH_BRANCH_RAN=" + (releaseLeak != null || fallback != null));
         System.out.println("RELEASE_AIOOBE_OBSERVED=" + (releaseLeak != null));
